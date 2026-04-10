@@ -818,6 +818,26 @@ hr {
   margin: var(--space-2) 0;
 }
 
+/* Preview canvas */
+.preview-canvas {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.preview-canvas svg {
+  max-width: 100%;
+}
+
+.preview-strip-config {
+  margin-top: var(--space-3);
+}
+
 /* ==========================================================================
    Show mode
    ========================================================================== */
@@ -1043,6 +1063,23 @@ hr {
 /* ==========================================================================
    Quick bar (bottom of show mode)
    ========================================================================== */
+
+/* Show-mode mini preview */
+.show-preview-bar {
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-default);
+  max-height: 120px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.show-preview-bar svg {
+  max-height: 100px;
+  width: auto;
+}
 
 .quick-bar {
   display: flex;
@@ -1735,6 +1772,7 @@ hr {
       <button class="tab-btn" data-tab="library" type="button" role="tab">Bibliothek</button>
       <button class="tab-btn" data-tab="playlist" type="button" role="tab">Playlist</button>
       <button class="tab-btn" data-tab="quick" type="button" role="tab">Quick-Buttons</button>
+      <button class="tab-btn" data-tab="preview" type="button" role="tab">Vorschau</button>
       <button class="tab-btn" data-tab="settings" type="button" role="tab">Einstellungen</button>
     </nav>
 
@@ -1790,6 +1828,32 @@ hr {
       <p class="hint">Quick-Buttons feuern ihren Cue, ohne den Playlist-Pointer zu bewegen. Ideal für Busking, Effekte und Notfall.</p>
       <div class="quick-config-list" id="quick-config-list">
         <!-- Quick-Button-Slots werden dynamisch eingefügt -->
+      </div>
+    </section>
+
+    <!-- Tab: Vorschau -->
+    <section class="tab-panel" id="tab-preview" role="tabpanel">
+      <div class="tab-header">
+        <h2>Vorschau</h2>
+        <div class="tab-actions">
+          <select id="preview-layout" class="search-input" style="min-width:150px">
+            <option value="row">5 in Reihe</option>
+            <option value="2-3">2 oben + 3 unten</option>
+            <option value="3-2">3 oben + 2 unten</option>
+          </select>
+          <select id="preview-cue" class="search-input" style="min-width:200px">
+            <option value="">— Cue wählen —</option>
+          </select>
+          <button class="btn btn-secondary" id="preview-fire-btn" type="button">🔥 Test</button>
+        </div>
+      </div>
+      <div id="preview-canvas" class="preview-canvas">
+        <!-- SVG wird hier gerendert -->
+      </div>
+      <div class="preview-strip-config" id="preview-strip-config">
+        <h3 style="margin:16px 0 8px">Strip-Positionen</h3>
+        <p class="hint">Bestimmt, wo die Strips visuell auf dem Cube dargestellt werden.</p>
+        <!-- Strip-Position-Selektoren werden dynamisch eingefügt -->
       </div>
     </section>
 
@@ -1900,6 +1964,11 @@ hr {
         </div>
       </aside>
 
+    </div>
+
+    <!-- Mini-Vorschau zwischen Grid und Quick-Buttons -->
+    <div class="show-preview-bar" id="show-preview-bar">
+      <!-- SVG Mini-Vorschau wird dynamisch eingefügt -->
     </div>
 
     <!-- Quick-Button-Leiste am unteren Rand -->
@@ -2650,6 +2719,7 @@ hr {
     else if (runtime.activeTab === 'library') renderLibraryTab();
     else if (runtime.activeTab === 'playlist') renderPlaylistTab();
     else if (runtime.activeTab === 'quick') renderQuickConfigTab();
+    else if (runtime.activeTab === 'preview') renderPreviewTab();
     else if (runtime.activeTab === 'settings') renderSettingsTab();
   }
 
@@ -2927,6 +2997,190 @@ hr {
     saveState();
   }
 
+  // ----------------------------------------------------------------------
+  // Preview tab rendering (2D SVG Vorschau)
+  // ----------------------------------------------------------------------
+
+  const STRIP_POSITIONS = {
+    'bottom-inside':  { label: 'Unten innen',  render: (w, h, pad) => ({ x: pad, y: h - pad - 10, width: w - 2 * pad, height: 10 }) },
+    'top-inside':     { label: 'Oben innen',   render: (w, h, pad) => ({ x: pad, y: pad, width: w - 2 * pad, height: 10 }) },
+    'front-left':     { label: 'Vorne links',  render: (w, h, pad) => ({ x: 0, y: pad, width: 8, height: h - 2 * pad }) },
+    'front-right':    { label: 'Vorne rechts', render: (w, h, pad) => ({ x: w - 8, y: pad, width: 8, height: h - 2 * pad }) },
+    'top':            { label: 'Oben',         render: (w, h, pad) => ({ x: 0, y: 0, width: w, height: 8 }) },
+    'bottom':         { label: 'Unten',        render: (w, h, pad) => ({ x: 0, y: h - 8, width: w, height: 8 }) },
+    'left':           { label: 'Links',        render: (w, h, pad) => ({ x: 0, y: 0, width: 8, height: h }) },
+    'right':          { label: 'Rechts',       render: (w, h, pad) => ({ x: w - 8, y: 0, width: 8, height: h }) },
+    'center-h':       { label: 'Mitte horizontal', render: (w, h, pad) => ({ x: pad, y: h / 2 - 5, width: w - 2 * pad, height: 10 }) },
+    'center-v':       { label: 'Mitte vertikal',   render: (w, h, pad) => ({ x: w / 2 - 5, y: pad, width: 10, height: h - 2 * pad }) },
+  };
+
+  const DEFAULT_STRIP_POSITIONS = ['bottom-inside', 'front-left'];
+
+  function getStripPosition(cube, stripId) {
+    if (cube.visual && cube.visual.strips) {
+      const vs = cube.visual.strips.find(s => s.stripId === stripId);
+      if (vs) return vs.position;
+    }
+    return DEFAULT_STRIP_POSITIONS[stripId] || 'bottom-inside';
+  }
+
+  function setStripPosition(cubeId, stripId, position) {
+    const cube = state.cubes.find(c => c.id === cubeId);
+    if (!cube) return;
+    if (!cube.visual) cube.visual = { strips: [] };
+    if (!cube.visual.strips) cube.visual.strips = [];
+    let vs = cube.visual.strips.find(s => s.stripId === stripId);
+    if (!vs) {
+      vs = { stripId, position };
+      cube.visual.strips.push(vs);
+    }
+    vs.position = position;
+    saveState();
+  }
+
+  function getStripColor(cube, stripId, cue) {
+    if (!cue) return null;
+    const action = cue.actions.find(a => a.cubeId === cube.id && a.stripId === stripId);
+    if (!action || action.mode === 'off') return null;
+    if (action.mode === 'custom' && action.rgbw) {
+      const [r, g, b, w] = action.rgbw;
+      const bri = (action.brightness || 100) / 100;
+      return `rgba(${Math.min(255, Math.round((r + w * 0.5) * bri))}, ${Math.min(255, Math.round((g + w * 0.5) * bri))}, ${Math.min(255, Math.round((b + w * 0.5) * bri))}, 1)`;
+    }
+    if (action.mode === 'effect') return '#a371f7'; // Lila für Effekte
+    if (action.mode === 'preset') return '#d29922'; // Gelb für Presets
+    return '#888';
+  }
+
+  function renderPreviewSVG(selectedCueId) {
+    const cue = state.library.find(c => c.id === selectedCueId) || null;
+    const layout = document.getElementById('preview-layout')?.value || 'row';
+    const cubeW = 140, cubeH = 140, gap = 20, pad = 15;
+
+    let positions = [];
+    const n = state.cubes.length;
+
+    if (layout === 'row') {
+      for (let i = 0; i < n; i++) positions.push({ x: i * (cubeW + gap), y: 0 });
+    } else if (layout === '2-3') {
+      // 2 oben, 3 unten
+      for (let i = 0; i < Math.min(2, n); i++) positions.push({ x: i * (cubeW + gap) + (cubeW + gap) / 2, y: 0 });
+      for (let i = 2; i < n; i++) positions.push({ x: (i - 2) * (cubeW + gap), y: cubeH + gap + 30 });
+    } else if (layout === '3-2') {
+      for (let i = 0; i < Math.min(3, n); i++) positions.push({ x: i * (cubeW + gap), y: 0 });
+      for (let i = 3; i < n; i++) positions.push({ x: (i - 3) * (cubeW + gap) + (cubeW + gap) / 2, y: cubeH + gap + 30 });
+    }
+
+    const maxX = Math.max(...positions.map(p => p.x)) + cubeW + gap;
+    const maxY = Math.max(...positions.map(p => p.y)) + cubeH + 40;
+
+    let svg = `<svg viewBox="0 0 ${maxX} ${maxY}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:60vh;background:var(--bg-primary);border-radius:8px;padding:16px">`;
+
+    state.cubes.forEach((cube, idx) => {
+      if (idx >= positions.length) return;
+      const pos = positions[idx];
+      const tx = pos.x, ty = pos.y;
+
+      // Cube-Rahmen
+      svg += `<g transform="translate(${tx}, ${ty})">`;
+      svg += `<rect x="0" y="0" width="${cubeW}" height="${cubeH}" fill="none" stroke="#30363d" stroke-width="2" rx="6"/>`;
+      svg += `<text x="${cubeW / 2}" y="${cubeH / 2}" text-anchor="middle" dominant-baseline="middle" fill="#404040" font-size="48" font-weight="700" font-family="sans-serif">${cube.id}</text>`;
+
+      // Strips rendern
+      cube.strips.forEach(strip => {
+        const position = getStripPosition(cube, strip.id);
+        const posDef = STRIP_POSITIONS[position];
+        if (!posDef) return;
+        const color = getStripColor(cube, strip.id, cue);
+        if (!color) return;
+        const rect = posDef.render(cubeW, cubeH, pad);
+        svg += `<rect x="${rect.x}" y="${rect.y}" width="${rect.width}" height="${rect.height}" fill="${color}" rx="3" opacity="0.9"/>`;
+      });
+
+      // Label
+      svg += `<text x="${cubeW / 2}" y="${cubeH + 16}" text-anchor="middle" fill="#a0a0a0" font-size="11" font-family="sans-serif">${escapeHtml(cube.name)}</text>`;
+
+      // Status-Info
+      if (cue) {
+        const cubeActions = cue.actions.filter(a => a.cubeId === cube.id && a.mode !== 'off');
+        if (cubeActions.length > 0) {
+          const desc = cubeActions.map(a => colorName(a.rgbw, a.brightness)).join(', ');
+          svg += `<text x="${cubeW / 2}" y="${cubeH + 30}" text-anchor="middle" fill="#606060" font-size="9" font-family="sans-serif">${escapeHtml(desc).substring(0, 20)}</text>`;
+        }
+      }
+
+      svg += `</g>`;
+    });
+
+    svg += `</svg>`;
+    return svg;
+  }
+
+  function renderPreviewTab() {
+    const canvas = document.getElementById('preview-canvas');
+    const cueSelect = document.getElementById('preview-cue');
+    const configDiv = document.getElementById('preview-strip-config');
+
+    // Cue-Dropdown befüllen
+    const currentVal = cueSelect.value;
+    cueSelect.innerHTML = '<option value="">— Cue wählen —</option>';
+    state.library.forEach(cue => {
+      cueSelect.innerHTML += `<option value="${cue.id}" ${cue.id === currentVal ? 'selected' : ''}>${escapeHtml(cue.name)}</option>`;
+    });
+
+    // SVG rendern
+    canvas.innerHTML = renderPreviewSVG(cueSelect.value);
+
+    // Strip-Position-Config rendern
+    let configHtml = '';
+    state.cubes.forEach(cube => {
+      configHtml += `<div class="settings-row" style="gap:8px;flex-wrap:wrap;padding:4px 0">`;
+      configHtml += `<strong style="min-width:80px">Cube ${cube.id}</strong>`;
+      cube.strips.forEach(strip => {
+        const currentPos = getStripPosition(cube, strip.id);
+        configHtml += `<label style="display:flex;align-items:center;gap:4px;font-size:13px">`;
+        configHtml += `Strip ${strip.id}:`;
+        configHtml += `<select class="strip-pos-select" data-cube="${cube.id}" data-strip="${strip.id}" style="background:var(--bg-tertiary);border:1px solid var(--border-default);color:var(--text-primary);padding:4px;border-radius:4px;font-size:12px">`;
+        Object.entries(STRIP_POSITIONS).forEach(([key, def]) => {
+          configHtml += `<option value="${key}" ${key === currentPos ? 'selected' : ''}>${def.label}</option>`;
+        });
+        configHtml += `</select></label>`;
+      });
+      configHtml += `</div>`;
+    });
+    configDiv.innerHTML = `<h3 style="margin:16px 0 8px">Strip-Positionen</h3><p class="hint">Bestimmt, wo die Strips visuell auf dem Cube dargestellt werden.</p>` + configHtml;
+
+    // Events wiren
+    configDiv.querySelectorAll('.strip-pos-select').forEach(sel => {
+      sel.addEventListener('change', () => {
+        setStripPosition(parseInt(sel.dataset.cube, 10), parseInt(sel.dataset.strip, 10), sel.value);
+        canvas.innerHTML = renderPreviewSVG(cueSelect.value);
+      });
+    });
+
+    cueSelect.addEventListener('change', () => {
+      canvas.innerHTML = renderPreviewSVG(cueSelect.value);
+    });
+
+    const layoutSelect = document.getElementById('preview-layout');
+    layoutSelect.addEventListener('change', () => {
+      canvas.innerHTML = renderPreviewSVG(cueSelect.value);
+    });
+
+    const fireBtn = document.getElementById('preview-fire-btn');
+    if (fireBtn) {
+      fireBtn.addEventListener('click', async () => {
+        const cue = state.library.find(c => c.id === cueSelect.value);
+        if (cue) {
+          toast(`Test: ${cue.name}`);
+          await fireCue(cue);
+        } else {
+          toast('Bitte einen Cue wählen', 'warning');
+        }
+      });
+    }
+  }
+
   function renderSettingsTab() {
     const s = state.settings;
     document.getElementById('setting-jump-fade').value = s.jumpFadeMs;
@@ -2949,7 +3203,19 @@ hr {
     document.getElementById('show-mode').hidden = false;
 
     renderShowColumns();
+    renderShowPreview();
     renderQuickBar();
+  }
+
+  function renderShowPreview() {
+    const bar = document.getElementById('show-preview-bar');
+    if (!bar) return;
+    const entry = state.playlist[runtime.playlistPointer];
+    if (!entry) {
+      bar.innerHTML = '';
+      return;
+    }
+    bar.innerHTML = renderPreviewSVG(entry.libraryId);
   }
 
   function renderShowColumns() {
@@ -3161,12 +3427,14 @@ hr {
       runtime.playlistPointer++;
     }
     renderShowColumns();
+    renderShowPreview();
   }
 
   function goPrev() {
     if (runtime.playlistPointer > 0) {
       runtime.playlistPointer--;
       renderShowColumns();
+      renderShowPreview();
     }
   }
 
@@ -3194,6 +3462,7 @@ hr {
     await fireCue(cue, fadeMs);
 
     renderShowColumns();
+    renderShowPreview();
   }
 
   async function fireQuickButton(slot) {
