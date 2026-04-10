@@ -1,0 +1,4187 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Cube Control">
+  <meta name="theme-color" content="#0a0a0a">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>ARS-Light Cube Control</title>
+  <style>
+/* ==========================================================================
+   Cube Control V1 — Stylesheet
+   Dark Theme only, responsive, touch-optimized
+   ========================================================================== */
+
+:root {
+  /* Backgrounds */
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #161616;
+  --bg-tertiary: #1f1f1f;
+  --bg-elevated: #262626;
+  --bg-hover: #2d2d2d;
+
+  /* Text */
+  --text-primary: #f0f0f0;
+  --text-secondary: #a0a0a0;
+  --text-muted: #606060;
+  --text-disabled: #404040;
+
+  /* Accents */
+  --accent-go: #2ea043;
+  --accent-go-hover: #3fb950;
+  --accent-emergency: #da3633;
+  --accent-emergency-hover: #f85149;
+  --accent-warning: #d29922;
+  --accent-info: #58a6ff;
+  --accent-purple: #a371f7;
+
+  /* Status */
+  --status-online: #2ea043;
+  --status-slow: #d29922;
+  --status-offline: #da3633;
+
+  /* Borders */
+  --border-default: #30363d;
+  --border-emphasis: #58a6ff;
+  --border-active: #2ea043;
+
+  /* Fonts */
+  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: SFMono-Regular, Consolas, "Liberation Mono", monospace;
+
+  /* Sizes */
+  --text-xs: 11px;
+  --text-sm: 13px;
+  --text-base: 15px;
+  --text-md: 17px;
+  --text-lg: 20px;
+  --text-xl: 24px;
+  --text-2xl: 32px;
+  --text-3xl: 48px;
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-8: 48px;
+
+  /* Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  /* Touch targets */
+  --touch-min: 44px;
+
+  /* Transitions */
+  --transition-fast: 100ms ease-out;
+  --transition-normal: 200ms ease-out;
+}
+
+/* ==========================================================================
+   Reset and base
+   ========================================================================== */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Fix: CSS display values override the HTML hidden attribute.
+   This ensures hidden elements stay hidden regardless of CSS class. */
+[hidden] {
+  display: none !important;
+}
+
+html, body {
+  height: 100%;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-family);
+  font-size: var(--text-base);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  overflow-x: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+input, textarea {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+button {
+  cursor: pointer;
+  background: none;
+  border: none;
+  touch-action: manipulation;  /* iOS: Tap sofort als Click, kein 300ms Delay */
+}
+
+/* Alle klickbaren Elemente auf iOS sofort reagieren lassen */
+a, button, [role="tab"], .tab-btn, .cue-card-side, .quick-btn,
+.insert-cue-row, .library-row, .playlist-row, .btn, label {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(255, 255, 255, 0.1);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+a { color: var(--accent-info); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+hr {
+  border: none;
+  border-top: 1px solid var(--border-default);
+  margin: var(--space-4) 0;
+}
+
+/* ==========================================================================
+   Demo banner
+   ========================================================================== */
+
+.demo-banner {
+  background: var(--accent-warning);
+  color: #000;
+  padding: var(--space-2) var(--space-4);
+  text-align: center;
+  font-weight: 600;
+  font-size: var(--text-sm);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+/* ==========================================================================
+   Topbar
+   ========================================================================== */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  padding-top: calc(env(safe-area-inset-top, 0px) + var(--space-3));
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-default);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.emergency-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background: var(--accent-emergency);
+  color: #fff;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  font-size: var(--text-sm);
+  min-height: var(--touch-min);
+  transition: background var(--transition-fast);
+}
+
+.emergency-btn:hover, .emergency-btn:focus {
+  background: var(--accent-emergency-hover);
+  outline: none;
+}
+
+.emergency-btn.armed {
+  animation: emergency-pulse 0.5s infinite;
+}
+
+@keyframes emergency-pulse {
+  0%, 100% { background: var(--accent-emergency); }
+  50% { background: var(--accent-emergency-hover); }
+}
+
+.show-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.show-name {
+  font-size: var(--text-md);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.show-meta {
+  display: flex;
+  gap: var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.timer {
+  font-family: var(--font-mono);
+}
+
+.cube-status-row {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.cube-status-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--text-disabled);
+}
+
+.cube-status-dot.online { background: var(--status-online); }
+.cube-status-dot.slow { background: var(--status-slow); }
+.cube-status-dot.offline { background: var(--status-offline); }
+
+.topbar-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.mode-toggle-btn {
+  padding: var(--space-2) var(--space-4);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  min-height: var(--touch-min);
+  transition: background var(--transition-fast);
+}
+
+.mode-toggle-btn:hover {
+  background: var(--bg-hover);
+}
+
+/* ==========================================================================
+   Buttons
+   ========================================================================== */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: var(--text-sm);
+  min-height: var(--touch-min);
+  transition: background var(--transition-fast), transform var(--transition-fast);
+  white-space: nowrap;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn-primary {
+  background: var(--accent-info);
+  color: #fff;
+}
+.btn-primary:hover { background: #79b8ff; }
+
+.btn-secondary {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+}
+.btn-secondary:hover { background: var(--bg-hover); }
+
+.btn-danger {
+  background: var(--accent-emergency);
+  color: #fff;
+}
+.btn-danger:hover { background: var(--accent-emergency-hover); }
+
+.btn-text {
+  background: transparent;
+  color: var(--text-secondary);
+}
+.btn-text:hover { color: var(--text-primary); }
+
+.btn-go {
+  background: var(--accent-go);
+  color: #fff;
+  font-size: clamp(var(--text-md), 3vh, var(--text-xl));
+  padding: var(--space-3) var(--space-5);
+  min-height: 60px;
+  border-radius: var(--radius-lg);
+  font-weight: 700;
+  flex: 1 1 auto;
+  max-width: 200px;
+}
+.btn-go:hover { background: var(--accent-go-hover); }
+
+.btn-prev {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+  padding: var(--space-2) var(--space-3);
+  min-height: var(--touch-min);
+}
+.btn-prev:hover { background: var(--bg-hover); }
+
+.btn-icon {
+  background: transparent;
+  color: var(--text-secondary);
+  padding: var(--space-2);
+  min-width: var(--touch-min);
+  min-height: var(--touch-min);
+  border-radius: var(--radius-sm);
+}
+.btn-icon:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* ==========================================================================
+   Edit mode
+   ========================================================================== */
+
+.edit-mode {
+  padding: var(--space-4);
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.edit-tabs {
+  display: flex;
+  gap: var(--space-2);
+  border-bottom: 1px solid var(--border-default);
+  margin-bottom: var(--space-4);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tab-btn {
+  padding: var(--space-3) var(--space-4);
+  color: var(--text-secondary);
+  font-weight: 600;
+  border-bottom: 2px solid transparent;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
+  white-space: nowrap;
+  min-height: var(--touch-min);
+}
+
+.tab-btn:hover { color: var(--text-primary); }
+
+.tab-btn.active {
+  color: var(--accent-info);
+  border-bottom-color: var(--accent-info);
+}
+
+.tab-panel {
+  display: none;
+}
+
+.tab-panel.active {
+  display: block;
+}
+
+.tab-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4);
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.tab-header h2 {
+  font-size: var(--text-xl);
+}
+
+.tab-actions {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.search-input {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  color: var(--text-primary);
+  min-width: 200px;
+  min-height: var(--touch-min);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--accent-info);
+}
+
+/* ==========================================================================
+   Cube list (Edit mode → Cubes tab)
+   ========================================================================== */
+
+.cube-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.cube-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+.cube-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-3);
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.cube-card-id {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: var(--bg-tertiary);
+  border-radius: 50%;
+  font-weight: 700;
+  color: var(--accent-info);
+}
+
+.cube-card-name {
+  font-size: var(--text-md);
+  font-weight: 600;
+}
+
+.cube-card-ip {
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+.cube-card-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.cube-card-strips {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-left: var(--space-5);
+}
+
+.cube-strip-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.cube-strip-marker {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-info);
+}
+
+/* ==========================================================================
+   Library list
+   ========================================================================== */
+
+.library-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.library-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto auto;
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-3);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  transition: background var(--transition-fast);
+}
+
+.library-row:hover {
+  background: var(--bg-tertiary);
+}
+
+.library-row-name {
+  font-weight: 600;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.library-row-description {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.library-row-fade {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.library-row-usage {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.library-row-usage.unused {
+  color: var(--text-muted);
+}
+
+.library-row-actions {
+  display: flex;
+  gap: var(--space-1);
+}
+
+/* ==========================================================================
+   Cube indicators (5 dots showing which cubes are active in a cue)
+   ========================================================================== */
+
+.cube-indicators {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.cube-indicator {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid var(--text-disabled);
+  background: transparent;
+}
+
+.cube-indicator.active {
+  border-color: var(--text-primary);
+}
+
+.cube-indicators.large .cube-indicator {
+  width: 24px;
+  height: 24px;
+  border-width: 2px;
+}
+
+/* ==========================================================================
+   Playlist
+   ========================================================================== */
+
+.playlist-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.playlist-row {
+  display: grid;
+  grid-template-columns: 40px 1fr 1fr auto;
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-3);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  margin-bottom: 0;
+}
+
+.playlist-position {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.playlist-cue-name {
+  font-weight: 600;
+}
+
+.playlist-note {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.playlist-note input {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2);
+  width: 100%;
+  color: var(--text-secondary);
+}
+
+.playlist-note input:focus, .playlist-note input:hover {
+  outline: none;
+  background: var(--bg-tertiary);
+  border-color: var(--border-default);
+  color: var(--text-primary);
+}
+
+.playlist-actions {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.insert-cue-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  margin: var(--space-1) 0;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  transition: background var(--transition-fast), color var(--transition-fast);
+  font-size: var(--text-xs);
+}
+
+.insert-cue-row:hover {
+  background: var(--bg-tertiary);
+  color: var(--accent-info);
+}
+
+.playlist-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--space-4);
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.playlist-count {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+/* ==========================================================================
+   Quick button config
+   ========================================================================== */
+
+.quick-config-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.quick-config-row {
+  display: grid;
+  grid-template-columns: 60px 1fr 1fr 60px auto;
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-3);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+}
+
+.quick-config-slot {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.quick-config-row select,
+.quick-config-row input[type="text"] {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2);
+  color: var(--text-primary);
+  min-height: var(--touch-min);
+  width: 100%;
+}
+
+.quick-config-row input[type="color"] {
+  width: 60px;
+  height: var(--touch-min);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--bg-tertiary);
+  cursor: pointer;
+}
+
+/* ==========================================================================
+   Settings
+   ========================================================================== */
+
+.settings-group {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.settings-group legend {
+  font-weight: 700;
+  color: var(--accent-info);
+  padding: 0 var(--space-2);
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  font-size: var(--text-base);
+}
+
+.settings-row > span:first-child {
+  flex: 1;
+}
+
+.settings-row.checkbox {
+  cursor: pointer;
+}
+
+.settings-row input[type="number"] {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2);
+  color: var(--text-primary);
+  width: 100px;
+  min-height: var(--touch-min);
+  text-align: right;
+  font-family: var(--font-mono);
+}
+
+.settings-row input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent-info);
+  cursor: pointer;
+}
+
+.settings-row .unit {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  width: 30px;
+}
+
+.button-row {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.hint {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  font-style: italic;
+  margin: var(--space-2) 0;
+}
+
+/* ==========================================================================
+   Show mode
+   ========================================================================== */
+
+.show-mode {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 70px);
+  height: calc(100dvh - 70px);
+}
+
+.show-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1.4fr 1fr;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  overflow: hidden;
+}
+
+.cue-column {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.column-title {
+  padding: var(--space-3);
+  font-size: var(--text-md);
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: center;
+  border-bottom: 1px solid var(--border-default);
+  background: var(--bg-tertiary);
+}
+
+.current-column .column-title {
+  color: var(--accent-info);
+  font-size: var(--text-lg);
+}
+
+.cue-column .cue-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Past/Next side-column cards */
+
+.cue-card-side {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  opacity: 0.7;
+}
+
+.cue-card-side:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent-info);
+  opacity: 1;
+}
+
+.cue-card-side .position {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+
+.cue-card-side .position .check {
+  color: var(--accent-go);
+  margin-right: var(--space-1);
+}
+
+.cue-card-side .name {
+  font-weight: 600;
+  font-size: var(--text-base);
+}
+
+.cue-card-side .note {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+/* Current cue card (large, central) */
+
+.current-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.current-cue-card {
+  flex: 1;
+  background: var(--bg-secondary);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--space-3);
+  overflow-y: auto;  /* scrollbar falls Inhalt zu groß */
+  min-height: 0;     /* erlaubt Flex-Schrumpfung */
+}
+
+.current-position {
+  font-family: var(--font-mono);
+  font-size: clamp(var(--text-lg), 3vh, var(--text-2xl));
+  color: var(--accent-info);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.current-name {
+  font-size: clamp(var(--text-xl), 5vh, var(--text-3xl));
+  font-weight: 700;
+  line-height: 1.1;
+  word-break: break-word;
+}
+
+.current-cube-grid {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.current-cube-card {
+  width: clamp(50px, 8vw, 80px);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.current-cube-card.inactive {
+  opacity: 0.4;
+}
+
+.current-cube-card .label {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.current-cube-card .strip-bar {
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--bg-elevated);
+}
+
+.current-detail {
+  font-size: clamp(var(--text-xs), 1.5vh, var(--text-sm));
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.current-fade {
+  font-family: var(--font-mono);
+  font-size: clamp(var(--text-xs), 1.5vh, var(--text-sm));
+  color: var(--text-secondary);
+}
+
+.current-note {
+  font-size: clamp(var(--text-sm), 2vh, var(--text-base));
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.current-actions {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  justify-content: center;
+  margin-top: var(--space-2);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 500px;
+}
+
+.live-edit-btn {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-default);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+  min-height: var(--touch-min);
+  white-space: nowrap;
+}
+.live-edit-btn:hover { background: var(--bg-hover); }
+
+/* Kompaktere Buttons bei schmalen Fenstern */
+@media (max-width: 900px) {
+  .btn-go {
+    font-size: var(--text-md);
+    padding: var(--space-2) var(--space-4);
+    min-height: 50px;
+  }
+  .current-actions {
+    gap: var(--space-1);
+  }
+}
+
+/* ==========================================================================
+   Quick bar (bottom of show mode)
+   ========================================================================== */
+
+.quick-bar {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-default);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.quick-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-width: 100px;
+  min-height: 70px;
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: var(--text-base);
+  transition: background var(--transition-fast), transform var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.quick-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent-info);
+}
+
+.quick-btn:active {
+  transform: scale(0.95);
+}
+
+.quick-btn.firing {
+  animation: quick-fire 200ms ease-out;
+}
+
+@keyframes quick-fire {
+  0% { background: var(--accent-go); }
+  100% { background: var(--bg-tertiary); }
+}
+
+.quick-btn-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid var(--border-default);
+}
+
+.quick-btn-shortcut {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+/* ==========================================================================
+   Modals
+   ========================================================================== */
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: var(--space-4);
+  animation: fade-in 100ms ease-out;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-content {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-content.modal-large {
+  max-width: 900px;
+}
+
+.modal-content.modal-small {
+  max-width: 400px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--border-default);
+}
+
+.modal-header h3 {
+  font-size: var(--text-lg);
+}
+
+.modal-close {
+  width: var(--touch-min);
+  height: var(--touch-min);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-lg);
+  color: var(--text-secondary);
+}
+
+.modal-close:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.modal-body {
+  padding: var(--space-4);
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border-top: 1px solid var(--border-default);
+  flex-wrap: wrap;
+}
+
+.form-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.form-row label {
+  min-width: 120px;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+.form-row input[type="text"],
+.form-row input[type="number"],
+.form-row input[type="search"] {
+  flex: 1;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  color: var(--text-primary);
+  min-height: var(--touch-min);
+}
+
+.form-row input[type="text"]:focus,
+.form-row input[type="number"]:focus,
+.form-row input[type="search"]:focus {
+  outline: none;
+  border-color: var(--accent-info);
+}
+
+.form-row input[type="range"] {
+  flex: 1;
+  height: 32px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  outline: none;
+}
+
+.form-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  background: var(--accent-info);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.form-row input[type="range"]::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  background: var(--accent-info);
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
+
+.form-row input[type="color"] {
+  width: 60px;
+  height: var(--touch-min);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--bg-tertiary);
+  cursor: pointer;
+}
+
+.form-row select {
+  flex: 1;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  color: var(--text-primary);
+  min-height: var(--touch-min);
+}
+
+.value-display {
+  min-width: 60px;
+  text-align: right;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+}
+
+/* Cue editor cube action sections */
+
+.cube-action-section {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.cube-action-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.cube-action-header label {
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cube-action-strip {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.cube-action-strip h5 {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-2);
+}
+
+.mode-radio-group {
+  display: flex;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.mode-radio-group label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  cursor: pointer;
+  font-size: var(--text-sm);
+}
+
+.mode-radio-group input[type="radio"] {
+  accent-color: var(--accent-info);
+}
+
+.bulk-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* ==========================================================================
+   Live edit modal — cube section (collapsible)
+   ========================================================================== */
+
+.live-cube-section {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-2);
+}
+
+.live-cube-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3);
+  cursor: pointer;
+}
+
+.live-cube-header.inactive {
+  opacity: 0.5;
+}
+
+.live-cube-body {
+  padding: 0 var(--space-3) var(--space-3);
+}
+
+.live-cube-body[hidden] {
+  display: none;
+}
+
+/* ==========================================================================
+   Popover (Jump-to-Cue)
+   ========================================================================== */
+
+.popover {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 250;
+  padding: var(--space-4);
+}
+
+.popover-content {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  max-width: 400px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.popover-content h4 {
+  font-size: var(--text-lg);
+}
+
+.popover-cue-info {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.popover-cue-info .cue-name {
+  font-size: var(--text-md);
+  font-weight: 600;
+}
+
+.popover-cue-info .cue-note {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.popover-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* ==========================================================================
+   Toasts
+   ========================================================================== */
+
+.toast-container {
+  position: fixed;
+  bottom: var(--space-4);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  z-index: 300;
+  pointer-events: none;
+  width: 100%;
+  max-width: 480px;
+  padding: 0 var(--space-4);
+}
+
+.toast {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-sm);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  pointer-events: auto;
+  animation: slide-up 200ms ease-out;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+@keyframes slide-up {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.toast.success { border-color: var(--accent-go); }
+.toast.warning { border-color: var(--accent-warning); }
+.toast.error { border-color: var(--accent-emergency); }
+
+.toast-undo {
+  background: transparent;
+  border: 1px solid var(--text-secondary);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-3);
+  color: var(--text-primary);
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+
+.toast-undo:hover {
+  background: var(--bg-hover);
+}
+
+/* ==========================================================================
+   Dropdown (insert-cue)
+   ========================================================================== */
+
+.dropdown {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 10vh;
+  z-index: 250;
+  padding-left: var(--space-4);
+  padding-right: var(--space-4);
+}
+
+.dropdown-content {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+  max-width: 480px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-height: 70vh;
+}
+
+.dropdown-list {
+  list-style: none;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.dropdown-list li {
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  transition: background var(--transition-fast);
+}
+
+.dropdown-list li:hover {
+  background: var(--bg-tertiary);
+}
+
+.dropdown-list li .name {
+  font-weight: 600;
+}
+
+.dropdown-list li .meta {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+/* ==========================================================================
+   Snapshots table
+   ========================================================================== */
+
+.snapshots-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.snapshots-table th {
+  text-align: left;
+  padding: var(--space-2);
+  color: var(--text-secondary);
+  font-weight: 600;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.snapshots-table td {
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--border-default);
+}
+
+/* ==========================================================================
+   Responsive — Portrait tablet and smaller
+   ========================================================================== */
+
+@media (max-width: 1023px) and (orientation: portrait) {
+
+  .show-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto;
+    gap: var(--space-2);
+  }
+
+  .past-column, .next-column {
+    max-height: 25vh;
+  }
+
+  .current-column {
+    min-height: 40vh;
+  }
+
+  .current-name {
+    font-size: var(--text-2xl);
+  }
+
+  .current-position {
+    font-size: var(--text-xl);
+  }
+}
+
+@media (max-width: 767px) {
+
+  .topbar {
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .show-info {
+    order: 3;
+    flex-basis: 100%;
+  }
+
+  .emergency-btn {
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .emergency-label {
+    display: none;
+  }
+
+  .show-grid {
+    grid-template-columns: 1fr;
+    padding: var(--space-2);
+  }
+
+  .past-column, .next-column {
+    max-height: 20vh;
+  }
+
+  .btn-go {
+    font-size: var(--text-lg);
+    padding: var(--space-3) var(--space-5);
+    min-height: 60px;
+    min-width: 120px;
+  }
+
+  .current-name {
+    font-size: var(--text-xl);
+  }
+
+  .current-position {
+    font-size: var(--text-lg);
+  }
+
+  .quick-btn {
+    min-width: 80px;
+    min-height: 60px;
+    font-size: var(--text-sm);
+  }
+
+  .modal-content {
+    max-height: 95vh;
+  }
+
+  .modal-footer {
+    flex-direction: column-reverse;
+  }
+
+  .modal-footer .btn {
+    width: 100%;
+  }
+
+  .library-row {
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+  }
+
+  .playlist-row {
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+  }
+
+  .quick-config-row {
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+  }
+}
+
+/* ==========================================================================
+   Reduced motion
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ==========================================================================
+   Print
+   ========================================================================== */
+
+@media print {
+  .topbar, .quick-bar, .edit-tabs, .modal, .popover, .toast-container, .dropdown {
+    display: none !important;
+  }
+}
+  </style>
+  <link rel="apple-touch-icon" href="data:image/png;base64,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">
+</head>
+<body>
+
+  <!-- ==================================================================== -->
+  <!-- DEMO MODE BANNER (zeigt sich nur wenn settings.demoMode === true)     -->
+  <!-- ==================================================================== -->
+  <div id="demo-banner" class="demo-banner" hidden>
+    <span>⚠ DEMO-MODUS — keine echten Cube-Befehle</span>
+  </div>
+
+  <!-- ==================================================================== -->
+  <!-- TOP BAR (sichtbar in beiden Modi)                                      -->
+  <!-- ==================================================================== -->
+  <header class="topbar" id="topbar">
+    <button id="emergency-btn" class="emergency-btn" type="button" aria-label="Notfall auslösen">
+      <span class="emergency-icon">⚠</span>
+      <span class="emergency-label">NOTFALL</span>
+    </button>
+
+    <div class="show-info">
+      <div class="show-name" id="show-name">Cube Control V1</div>
+      <div class="show-meta">
+        <span class="timer" id="show-timer" hidden>Show 00:00:00</span>
+        <span class="timer" id="cue-timer" hidden>Cue 00:00:00</span>
+        <span class="cube-status-row" id="cube-status-row" hidden></span>
+      </div>
+    </div>
+
+    <div class="topbar-actions">
+      <button id="mode-toggle-btn" class="mode-toggle-btn" type="button">
+        <span id="mode-toggle-label">Show ▶</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ==================================================================== -->
+  <!-- EDIT MODE                                                              -->
+  <!-- ==================================================================== -->
+  <main id="edit-mode" class="edit-mode">
+
+    <nav class="edit-tabs" role="tablist">
+      <button class="tab-btn active" data-tab="cubes" type="button" role="tab">Cubes</button>
+      <button class="tab-btn" data-tab="library" type="button" role="tab">Bibliothek</button>
+      <button class="tab-btn" data-tab="playlist" type="button" role="tab">Playlist</button>
+      <button class="tab-btn" data-tab="quick" type="button" role="tab">Quick-Buttons</button>
+      <button class="tab-btn" data-tab="settings" type="button" role="tab">Einstellungen</button>
+    </nav>
+
+    <!-- Tab: Cubes -->
+    <section class="tab-panel active" id="tab-cubes" role="tabpanel">
+      <div class="tab-header">
+        <h2>Cubes</h2>
+        <button class="btn btn-primary" id="add-cube-btn" type="button">+ Cube</button>
+      </div>
+      <div class="cube-list" id="cube-list">
+        <!-- Cubes werden dynamisch eingefügt -->
+      </div>
+    </section>
+
+    <!-- Tab: Bibliothek -->
+    <section class="tab-panel" id="tab-library" role="tabpanel">
+      <div class="tab-header">
+        <h2>Cue-Bibliothek</h2>
+        <div class="tab-actions">
+          <input type="search" id="library-search" placeholder="Suche..." class="search-input">
+          <button class="btn btn-primary" id="add-cue-btn" type="button">+ Neuer Cue</button>
+        </div>
+      </div>
+      <div class="library-list" id="library-list">
+        <!-- Cues werden dynamisch eingefügt -->
+      </div>
+    </section>
+
+    <!-- Tab: Playlist -->
+    <section class="tab-panel" id="tab-playlist" role="tabpanel">
+      <div class="tab-header">
+        <h2>Playlist</h2>
+        <div class="tab-actions">
+          <button class="btn btn-secondary" id="export-playlist-btn" type="button">Export</button>
+          <button class="btn btn-secondary" id="import-playlist-btn" type="button">Import</button>
+          <input type="file" id="import-file-input" accept=".json" hidden>
+        </div>
+      </div>
+      <div class="playlist-list" id="playlist-list">
+        <!-- Playlist-Einträge werden dynamisch eingefügt -->
+      </div>
+      <div class="playlist-footer">
+        <button class="btn btn-primary" id="append-cue-btn" type="button">+ Cue am Ende anhängen</button>
+        <span class="playlist-count" id="playlist-count">Gesamt: 0 Cues</span>
+      </div>
+    </section>
+
+    <!-- Tab: Quick-Buttons -->
+    <section class="tab-panel" id="tab-quick" role="tabpanel">
+      <div class="tab-header">
+        <h2>Quick-Buttons</h2>
+      </div>
+      <p class="hint">Quick-Buttons feuern ihren Cue, ohne den Playlist-Pointer zu bewegen. Ideal für Busking, Effekte und Notfall.</p>
+      <div class="quick-config-list" id="quick-config-list">
+        <!-- Quick-Button-Slots werden dynamisch eingefügt -->
+      </div>
+    </section>
+
+    <!-- Tab: Einstellungen -->
+    <section class="tab-panel" id="tab-settings" role="tabpanel">
+      <div class="tab-header">
+        <h2>Einstellungen</h2>
+      </div>
+
+      <fieldset class="settings-group">
+        <legend>Zeiten</legend>
+        <label class="settings-row">
+          <span>Sprung-Fade-Standard</span>
+          <input type="number" id="setting-jump-fade" min="0" max="5000" step="100">
+          <span class="unit">ms</span>
+        </label>
+      </fieldset>
+
+      <fieldset class="settings-group">
+        <legend>Anzeige</legend>
+        <label class="settings-row checkbox">
+          <input type="checkbox" id="setting-show-timer">
+          <span>Show-Timer in der Top-Bar anzeigen</span>
+        </label>
+        <label class="settings-row checkbox">
+          <input type="checkbox" id="setting-cue-timer">
+          <span>Cue-Timer in der Top-Bar anzeigen</span>
+        </label>
+        <label class="settings-row checkbox">
+          <input type="checkbox" id="setting-cube-status">
+          <span>Cube-Verbindungs-Status anzeigen</span>
+        </label>
+        <label class="settings-row">
+          <span>Anzahl Quick-Button-Slots</span>
+          <input type="number" id="setting-quick-slots" min="4" max="12" step="1">
+        </label>
+      </fieldset>
+
+      <fieldset class="settings-group">
+        <legend>Verbindung</legend>
+        <label class="settings-row">
+          <span>Request-Timeout pro Cube</span>
+          <input type="number" id="setting-request-timeout" min="500" max="10000" step="100">
+          <span class="unit">ms</span>
+        </label>
+        <label class="settings-row">
+          <span>Auto-Reconnect-Polling</span>
+          <input type="number" id="setting-reconnect-poll" min="1000" max="60000" step="500">
+          <span class="unit">ms</span>
+        </label>
+      </fieldset>
+
+      <fieldset class="settings-group">
+        <legend>Modi</legend>
+        <label class="settings-row checkbox">
+          <input type="checkbox" id="setting-demo-mode">
+          <span>Demo-Modus (kein echter Cube-Traffic)</span>
+        </label>
+      </fieldset>
+
+      <fieldset class="settings-group">
+        <legend>Daten</legend>
+        <p class="hint" id="snapshot-info">Letzte Snapshots: 0 verfügbar</p>
+        <div class="button-row">
+          <button class="btn btn-secondary" id="show-snapshots-btn" type="button">Snapshots anzeigen</button>
+          <button class="btn btn-secondary" id="manual-snapshot-btn" type="button">Aktuelles Setup als Snapshot speichern</button>
+        </div>
+        <div class="button-row">
+          <button class="btn btn-secondary" id="export-all-btn" type="button">Konfiguration als JSON exportieren</button>
+          <button class="btn btn-secondary" id="import-all-btn" type="button">JSON importieren</button>
+        </div>
+        <div class="button-row">
+          <button class="btn btn-danger" id="reset-all-btn" type="button">Alle Daten löschen — Werkseinstellungen</button>
+        </div>
+      </fieldset>
+    </section>
+
+  </main>
+
+  <!-- ==================================================================== -->
+  <!-- SHOW MODE                                                              -->
+  <!-- ==================================================================== -->
+  <main id="show-mode" class="show-mode" hidden>
+
+    <div class="show-grid">
+
+      <!-- Linke Spalte: Vergangen -->
+      <aside class="cue-column past-column" id="past-column">
+        <h3 class="column-title">Vergangen</h3>
+        <div class="cue-list" id="past-list">
+          <!-- Vergangene Cues -->
+        </div>
+      </aside>
+
+      <!-- Mittlere Spalte: Aktuell -->
+      <section class="cue-column current-column" id="current-column">
+        <h3 class="column-title">◆ Aktuell ◆</h3>
+        <div class="current-cue-card" id="current-cue-card">
+          <!-- Aktueller Cue -->
+        </div>
+      </section>
+
+      <!-- Rechte Spalte: Folgend -->
+      <aside class="cue-column next-column" id="next-column">
+        <h3 class="column-title">Folgend</h3>
+        <div class="cue-list" id="next-list">
+          <!-- Folgende Cues -->
+        </div>
+      </aside>
+
+    </div>
+
+    <!-- Quick-Button-Leiste am unteren Rand -->
+    <footer class="quick-bar" id="quick-bar">
+      <!-- Quick-Buttons werden dynamisch eingefügt -->
+    </footer>
+
+  </main>
+
+  <!-- ==================================================================== -->
+  <!-- CUE EDITOR MODAL (Bibliothek)                                          -->
+  <!-- ==================================================================== -->
+  <div class="modal" id="cue-editor-modal" hidden>
+    <div class="modal-content modal-large">
+      <header class="modal-header">
+        <h3 id="cue-editor-title">Cue bearbeiten</h3>
+        <button class="modal-close" id="cue-editor-close" type="button" aria-label="Schließen">✕</button>
+      </header>
+      <div class="modal-body">
+        <div class="form-row">
+          <label>Name</label>
+          <input type="text" id="cue-editor-name">
+        </div>
+        <div class="form-row">
+          <label>Beschreibung</label>
+          <input type="text" id="cue-editor-description">
+        </div>
+        <div class="form-row">
+          <label>Fade-Zeit (ms)</label>
+          <input type="number" id="cue-editor-fade" min="0" max="10000" step="50">
+        </div>
+        <hr>
+        <h4>Aktionen pro Cube</h4>
+        <div id="cue-editor-actions">
+          <!-- Cube-Aktionen dynamisch -->
+        </div>
+        <hr>
+        <h4>Massen-Aktionen</h4>
+        <div class="bulk-actions">
+          <button class="btn btn-secondary" id="bulk-copy-cube1-all" type="button">Werte von Cube 1 auf alle aktiven übernehmen</button>
+        </div>
+      </div>
+      <footer class="modal-footer">
+        <button class="btn btn-secondary" id="cue-editor-cancel" type="button">Abbrechen</button>
+        <button class="btn btn-primary" id="cue-editor-save" type="button">Speichern</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- ==================================================================== -->
+  <!-- LIVE EDIT MODAL (Show-Modus, aktueller Cue)                            -->
+  <!-- ==================================================================== -->
+  <div class="modal" id="live-edit-modal" hidden>
+    <div class="modal-content">
+      <header class="modal-header">
+        <h3 id="live-edit-title">Live-Edit</h3>
+        <button class="modal-close" id="live-edit-close" type="button" aria-label="Schließen">✕</button>
+      </header>
+      <div class="modal-body">
+        <div class="form-row">
+          <label>Master-Helligkeit</label>
+          <input type="range" id="live-master-brightness" min="0" max="100" step="1">
+          <span class="value-display" id="live-master-brightness-value">100%</span>
+        </div>
+        <hr>
+        <div id="live-cube-list">
+          <!-- Cube-Detail-Sektionen dynamisch -->
+        </div>
+        <p class="hint">ⓘ Änderungen werden live auf den Cubes vorgeschaut.</p>
+      </div>
+      <footer class="modal-footer">
+        <button class="btn btn-secondary" id="live-edit-discard" type="button">✕ Verwerfen</button>
+        <button class="btn btn-primary" id="live-edit-save-one" type="button">💾 Nur diesen Cue</button>
+        <button class="btn btn-primary" id="live-edit-save-all" type="button">💾💾 Alle gleichen</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- ==================================================================== -->
+  <!-- JUMP POPOVER                                                           -->
+  <!-- ==================================================================== -->
+  <div class="popover" id="jump-popover" hidden>
+    <div class="popover-content">
+      <h4 id="jump-popover-title">Zu Cue X springen?</h4>
+      <div class="popover-cue-info">
+        <div class="cue-name" id="jump-popover-name"></div>
+        <div class="cube-indicators" id="jump-popover-indicators"></div>
+        <div class="cue-note" id="jump-popover-note"></div>
+      </div>
+      <div class="popover-actions">
+        <button class="btn btn-primary" id="jump-with-fade" type="button">🔥 Mit Fade</button>
+        <button class="btn btn-secondary" id="jump-immediate" type="button">⚡ Sofort</button>
+        <button class="btn btn-text" id="jump-cancel" type="button">Abbrechen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================================================================== -->
+  <!-- SNAPSHOTS DIALOG                                                       -->
+  <!-- ==================================================================== -->
+  <div class="modal" id="snapshots-modal" hidden>
+    <div class="modal-content">
+      <header class="modal-header">
+        <h3>Snapshots</h3>
+        <button class="modal-close" id="snapshots-close" type="button" aria-label="Schließen">✕</button>
+      </header>
+      <div class="modal-body">
+        <table class="snapshots-table">
+          <thead>
+            <tr>
+              <th>Zeitpunkt</th>
+              <th>Cubes</th>
+              <th>Cues</th>
+              <th>Playlist</th>
+              <th>Aktion</th>
+            </tr>
+          </thead>
+          <tbody id="snapshots-tbody">
+            <!-- Snapshots dynamisch -->
+          </tbody>
+        </table>
+        <p class="hint">Snapshots werden bei jeder größeren Änderung automatisch gespeichert (max. 5).</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================================================================== -->
+  <!-- CONFIRMATION DIALOG (generic)                                          -->
+  <!-- ==================================================================== -->
+  <div class="modal" id="confirm-modal" hidden>
+    <div class="modal-content modal-small">
+      <header class="modal-header">
+        <h3 id="confirm-title">Bestätigung</h3>
+      </header>
+      <div class="modal-body">
+        <p id="confirm-message">Bist du sicher?</p>
+      </div>
+      <footer class="modal-footer">
+        <button class="btn btn-secondary" id="confirm-cancel" type="button">Abbrechen</button>
+        <button class="btn btn-danger" id="confirm-ok" type="button">Bestätigen</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- ==================================================================== -->
+  <!-- TOAST CONTAINER                                                        -->
+  <!-- ==================================================================== -->
+  <div class="toast-container" id="toast-container" aria-live="polite">
+    <!-- Toasts dynamisch -->
+  </div>
+
+  <!-- ==================================================================== -->
+  <!-- INSERT-CUE DROPDOWN (Pulldown bei Playlist + Quick-Button-Konfig)      -->
+  <!-- ==================================================================== -->
+  <div class="dropdown" id="insert-cue-dropdown" hidden>
+    <div class="dropdown-content">
+      <input type="search" id="insert-cue-search" placeholder="Cue suchen..." class="search-input">
+      <ul class="dropdown-list" id="insert-cue-list">
+        <!-- Cue-Optionen dynamisch -->
+      </ul>
+      <button class="btn btn-text" id="insert-cue-cancel" type="button">Abbrechen</button>
+    </div>
+  </div>
+
+  <script>
+/* ============================================================================
+ * Cube Control V1
+ * Browser-based controller for 5 LED cubes via WLED HTTP/JSON API
+ *
+ * Architecture:
+ *   - Single-page vanilla JavaScript, no frameworks
+ *   - State persisted in localStorage
+ *   - Communicates directly with WLED-running ESP32 boards
+ *   - Two modes: Edit (configuration) and Show (live operation)
+ *
+ * WLED API basics used here:
+ *   - POST /json/state with body {"on":true,"bri":255,"tt":5,"seg":[{...}]}
+ *     where tt is transition time in 100ms units (5 = 500ms)
+ *   - GET /json/state returns current state
+ *   - GET /json/info returns device info (name, mac, version)
+ *   - Preset recall: {"ps": N} in /json/state body
+ *   - Segment color: seg[].col is array of [r,g,b,w] arrays (up to 3 slots)
+ *   - Effect: seg[].fx (id), sx (speed), ix (intensity), pal (palette)
+ *   - Brightness: top-level "bri" (0-255) is master, seg[].bri is per-segment
+ *
+ * CRITICAL: CORS workaround
+ *   WLED does NOT send Access-Control-Allow-Origin headers (GitHub issue #99).
+ *   All POST requests must use mode:'no-cors' + Content-Type:'text/plain' to
+ *   avoid CORS preflight failures. Responses are opaque (unreadable) but
+ *   commands are executed by WLED. GET requests for state/info use no-cors
+ *   mode; success is detected by absence of network error, not response body.
+ * ============================================================================ */
+
+(function () {
+  'use strict';
+
+  // ==========================================================================
+  // Constants
+  // ==========================================================================
+
+  const STORAGE_KEY = 'cube-control-v1';
+  const MAX_SNAPSHOTS = 5;
+  const SAVE_DEBOUNCE_MS = 500;
+  const LIVE_EDIT_DEBOUNCE_MS = 100;
+  const DEFAULT_REQUEST_TIMEOUT_MS = 1500;
+  const DEFAULT_RECONNECT_POLL_MS = 5000;
+
+  // Brightness scaling: WLED uses 0-255, our config uses 0-100
+  const BRIGHTNESS_SCALE = 2.55;
+
+  // ==========================================================================
+  // Default state
+  // ==========================================================================
+
+  function makeDefaultState() {
+    return {
+      version: '1.0',
+      show: {
+        name: 'Light_Cube — Neue Show',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      cubes: [
+        { id: 1, name: 'Cube 1', ip: '192.168.77.101', strips: [{ id: 0, name: 'innen', ledCount: 80 }] },
+        { id: 2, name: 'Cube 2', ip: '192.168.77.102', strips: [{ id: 0, name: 'innen', ledCount: 80 }] },
+        { id: 3, name: 'Cube 3', ip: '192.168.77.103', strips: [{ id: 0, name: 'innen', ledCount: 80 }] },
+        { id: 4, name: 'Cube 4', ip: '192.168.77.104', strips: [{ id: 0, name: 'innen', ledCount: 80 }] },
+        { id: 5, name: 'Cube 5', ip: '192.168.77.105', strips: [{ id: 0, name: 'innen', ledCount: 80 }] },
+      ],
+      library: [
+        makeDefaultCue('lib-blackout', 'Blackout', 'Alle Cubes komplett aus', 0, 'off'),
+        makeDefaultCue('lib-warmweiss-100', 'Warmweiß 100%', 'Alle Cubes warmweiß auf voller Helligkeit', 500, 'custom', [0, 0, 0, 255], 100),
+        makeDefaultCue('lib-warmweiss-50', 'Warmweiß 50%', 'Alle Cubes warmweiß auf halber Helligkeit', 500, 'custom', [0, 0, 0, 255], 50),
+        makeDefaultCue('lib-notfall', 'NOTFALL Vollweiß', 'Notfall-Sicherheits-Cue: alle Cubes auf Vollweiß 100%', 0, 'custom', [255, 255, 255, 255], 100),
+      ],
+      playlist: [
+        { libraryId: 'lib-blackout', note: 'Show-Beginn' },
+        { libraryId: 'lib-warmweiss-50', note: 'Begrüßung' },
+      ],
+      quickButtons: [
+        { slot: 1, libraryId: 'lib-warmweiss-100', label: 'WW 100', color: '#ffffff' },
+        { slot: 2, libraryId: 'lib-warmweiss-50', label: 'WW 50', color: '#a0a0a0' },
+        { slot: 3, libraryId: 'lib-blackout', label: 'Aus', color: '#000000' },
+      ],
+      settings: {
+        jumpFadeMs: 500,
+        language: 'de',
+        demoMode: false,
+        showTimerVisible: true,
+        cueTimerVisible: true,
+        cubeStatusVisible: true,
+        quickButtonSlots: 8,
+        requestTimeoutMs: DEFAULT_REQUEST_TIMEOUT_MS,
+        reconnectPollMs: DEFAULT_RECONNECT_POLL_MS,
+      },
+      snapshots: [],
+    };
+  }
+
+  function makeDefaultCue(id, name, description, fadeTime, mode, rgbw, brightness) {
+    const actions = [];
+    for (let i = 1; i <= 5; i++) {
+      const action = { cubeId: i, stripId: 0, mode };
+      if (mode === 'custom') {
+        action.rgbw = rgbw;
+        action.brightness = brightness;
+      }
+      actions.push(action);
+    }
+    return { id, name, description, fadeTime, actions };
+  }
+
+  // ==========================================================================
+  // Runtime state (not persisted)
+  // ==========================================================================
+
+  let state = null;
+  let runtime = {
+    mode: 'edit', // 'edit' | 'show'
+    activeTab: 'cubes',
+    playlistPointer: 0,
+    showStartTime: null,
+    cueStartTime: null,
+    showTimerInterval: null,
+    cueTimerInterval: null,
+    cubeStatus: {}, // { cubeId: 'online' | 'slow' | 'offline' }
+    reconnectInterval: null,
+    saveTimeout: null,
+    liveEditPreState: null, // pre-edit cube state for discard
+    liveEditCueId: null,
+    liveEditDebounceTimers: {},
+    pendingEmergencyConfirm: false,
+    emergencyConfirmTimeout: null,
+    pendingEscConfirm: false,
+    escConfirmTimeout: null,
+  };
+
+  // ==========================================================================
+  // localStorage persistence
+  // ==========================================================================
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) {
+        state = makeDefaultState();
+        saveState();
+        return;
+      }
+      const parsed = JSON.parse(raw);
+      if (!parsed.version) {
+        console.warn('Loaded state has no version, using as-is');
+      }
+      state = parsed;
+      // Initialize cube status
+      state.cubes.forEach(c => {
+        runtime.cubeStatus[c.id] = 'offline';
+      });
+    } catch (err) {
+      console.error('Failed to load state, using defaults', err);
+      toast('Konfiguration konnte nicht geladen werden — Default wiederhergestellt', 'error');
+      state = makeDefaultState();
+      saveState();
+    }
+  }
+
+  function saveState(immediate = false) {
+    if (runtime.saveTimeout) {
+      clearTimeout(runtime.saveTimeout);
+    }
+    const doSave = () => {
+      try {
+        state.show.updatedAt = new Date().toISOString();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (err) {
+        console.error('Failed to save state', err);
+        toast('Konfiguration konnte nicht gespeichert werden', 'error');
+      }
+    };
+    if (immediate) {
+      doSave();
+    } else {
+      runtime.saveTimeout = setTimeout(doSave, SAVE_DEBOUNCE_MS);
+    }
+  }
+
+  function snapshotState() {
+    const snapshot = {
+      timestamp: new Date().toISOString(),
+      data: JSON.parse(JSON.stringify({
+        cubes: state.cubes,
+        library: state.library,
+        playlist: state.playlist,
+        quickButtons: state.quickButtons,
+        settings: state.settings,
+      })),
+    };
+    state.snapshots.unshift(snapshot);
+    if (state.snapshots.length > MAX_SNAPSHOTS) {
+      state.snapshots = state.snapshots.slice(0, MAX_SNAPSHOTS);
+    }
+    saveState();
+  }
+
+  function restoreSnapshot(timestamp) {
+    const snap = state.snapshots.find(s => s.timestamp === timestamp);
+    if (!snap) return;
+    snapshotState(); // backup current
+    state.cubes = JSON.parse(JSON.stringify(snap.data.cubes));
+    state.library = JSON.parse(JSON.stringify(snap.data.library));
+    state.playlist = JSON.parse(JSON.stringify(snap.data.playlist));
+    state.quickButtons = JSON.parse(JSON.stringify(snap.data.quickButtons));
+    state.settings = JSON.parse(JSON.stringify(snap.data.settings));
+    saveState(true);
+    renderAll();
+    toast('Snapshot wiederhergestellt', 'success');
+  }
+
+  // ==========================================================================
+  // WLED API client
+  // ==========================================================================
+
+  /**
+   * Send a state update to a single cube via WLED JSON API
+   * @param {Object} cube - cube config object
+   * @param {Object} body - WLED state object {on, bri, tt, seg: [...]}
+   * @param {number} timeoutMs - request timeout
+   * @returns {Promise<boolean>} success
+   */
+  async function sendToCube(cube, body, timeoutMs) {
+    if (state.settings.demoMode) {
+      console.log('[DEMO]', cube.name, body);
+      runtime.cubeStatus[cube.id] = 'online';
+      return true;
+    }
+
+    const url = `http://${cube.ip}/json/state`;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs || state.settings.requestTimeoutMs);
+
+    try {
+      // CORS workaround: WLED has no CORS headers (GitHub issue #99).
+      // Using mode:'no-cors' + Content-Type:'text/plain' avoids preflight.
+      // Response is opaque (unreadable) but the command reaches WLED.
+      await fetch(url, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
+      // If we get here without exception, the server responded (opaque but alive)
+      runtime.cubeStatus[cube.id] = 'online';
+      renderCubeStatus();
+      return true;
+    } catch (err) {
+      clearTimeout(timer);
+      runtime.cubeStatus[cube.id] = 'offline';
+      renderCubeStatus();
+      console.warn(`Cube ${cube.id} unreachable`, err);
+      return false;
+    }
+  }
+
+  /**
+   * Fetch info from a cube to verify it's online
+   */
+  async function fetchCubeInfo(cube) {
+    if (state.settings.demoMode) {
+      runtime.cubeStatus[cube.id] = 'online';
+      return { name: 'Demo', ver: '0.15.4-demo' };
+    }
+    // CORS workaround: use no-cors GET. Response is opaque (can't read body),
+    // but if the fetch resolves without exception, the cube is alive.
+    const url = `http://${cube.ip}/json/info`;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), state.settings.requestTimeoutMs);
+    try {
+      await fetch(url, { mode: 'no-cors', signal: controller.signal });
+      clearTimeout(timer);
+      // Opaque response but server responded → cube is online
+      runtime.cubeStatus[cube.id] = 'online';
+      return { name: cube.name, ver: 'unknown (CORS)' };
+    } catch (err) {
+      clearTimeout(timer);
+    }
+    runtime.cubeStatus[cube.id] = 'offline';
+    return null;
+  }
+
+  /**
+   * Fetch presets from a cube. Returns array of {id, name}.
+   * WLED stores presets in /presets.json (config-style) — fetched separately.
+   */
+  async function fetchCubePresets(cube) {
+    if (state.settings.demoMode) {
+      return [
+        { id: 1, name: 'Demo Preset 1' },
+        { id: 2, name: 'Demo Preset 2' },
+      ];
+    }
+    // CORS workaround: /presets.json returns opaque response with no-cors.
+    // We can't read preset names from the browser due to CORS.
+    // Fall back to returning an empty list — user enters preset IDs manually.
+    // If hosted on a proxy or same-origin in the future, this will work.
+    const url = `http://${cube.ip}/presets.json`;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), state.settings.requestTimeoutMs);
+    try {
+      const response = await fetch(url, { signal: controller.signal });
+      clearTimeout(timer);
+      if (response.ok) {
+        const data = await response.json();
+        const presets = [];
+        Object.entries(data).forEach(([key, value]) => {
+          if (key === '0') return;
+          if (typeof value === 'object' && value.n) {
+            presets.push({ id: parseInt(key, 10), name: value.n });
+          }
+        });
+        return presets;
+      }
+    } catch (err) {
+      // CORS blocks reading the response — expected.
+      // Preset auto-discovery unavailable, user enters IDs manually.
+      console.log(`Preset auto-discovery for ${cube.name}: CORS-blocked, manual entry required`);
+    }
+    return [];
+  }
+
+  /**
+   * Build a WLED state body for a cube based on a cue's actions for that cube.
+   */
+  function buildCubeStateBody(cube, cubeActions, fadeTimeMs, masterBrightnessOverride) {
+    // tt is in 0.1s units (deciseconds)
+    const tt = Math.round((fadeTimeMs || 0) / 100);
+
+    // Group actions by stripId (segment)
+    const segments = [];
+    cubeActions.forEach(action => {
+      const stripDef = cube.strips.find(s => s.id === action.stripId);
+      if (!stripDef) return;
+
+      const seg = { id: action.stripId };
+
+      if (action.mode === 'off') {
+        seg.on = false;
+        seg.col = [[0, 0, 0, 0]];
+      } else if (action.mode === 'custom') {
+        seg.on = true;
+        const bri = action.brightness != null ? action.brightness : 100;
+        const briScaled = masterBrightnessOverride != null
+          ? Math.round((bri / 100) * (masterBrightnessOverride / 100) * 255)
+          : Math.round(bri * BRIGHTNESS_SCALE);
+        seg.bri = briScaled;
+        seg.col = [action.rgbw || [255, 255, 255, 0]];
+      } else if (action.mode === 'preset') {
+        // Preset is set on the cube level, not per-segment.
+        // Will be handled separately below.
+      } else if (action.mode === 'effect') {
+        seg.on = true;
+        seg.fx = action.effectId || 0;
+        seg.sx = action.speed != null ? action.speed : 128;
+        seg.ix = action.intensity != null ? action.intensity : 128;
+        seg.pal = action.paletteId != null ? action.paletteId : 0;
+        seg.col = [action.rgbw || [255, 255, 255, 0]];
+        const bri = action.brightness != null ? action.brightness : 100;
+        seg.bri = Math.round(bri * BRIGHTNESS_SCALE);
+      }
+
+      segments.push(seg);
+    });
+
+    // Check if any action is a preset — preset takes priority and overrides segments
+    const presetAction = cubeActions.find(a => a.mode === 'preset');
+    if (presetAction) {
+      return {
+        ps: presetAction.presetId,
+        tt,
+        // brightness override (optional)
+        bri: presetAction.brightness != null ? Math.round(presetAction.brightness * BRIGHTNESS_SCALE) : undefined,
+      };
+    }
+
+    return {
+      on: true,
+      bri: 255, // master brightness, segment-level brightness handles per-strip
+      tt,
+      seg: segments,
+    };
+  }
+
+  /**
+   * Fire a cue: send appropriate state to each cube involved.
+   */
+  async function fireCue(cue, fadeOverrideMs) {
+    const fadeTime = fadeOverrideMs != null ? fadeOverrideMs : (cue.fadeTime || 0);
+
+    // Group actions by cube
+    const actionsByCube = {};
+    cue.actions.forEach(action => {
+      if (!actionsByCube[action.cubeId]) actionsByCube[action.cubeId] = [];
+      actionsByCube[action.cubeId].push(action);
+    });
+
+    // Send to each cube in parallel
+    const promises = Object.entries(actionsByCube).map(async ([cubeIdStr, actions]) => {
+      const cubeId = parseInt(cubeIdStr, 10);
+      const cube = state.cubes.find(c => c.id === cubeId);
+      if (!cube) return;
+      const body = buildCubeStateBody(cube, actions, fadeTime);
+      await sendToCube(cube, body);
+    });
+
+    await Promise.all(promises);
+  }
+
+  // ==========================================================================
+  // UI rendering
+  // ==========================================================================
+
+  function renderAll() {
+    renderTopBar();
+    if (runtime.mode === 'edit') {
+      renderEditMode();
+    } else {
+      renderShowMode();
+    }
+  }
+
+  function renderTopBar() {
+    document.getElementById('show-name').textContent = state.show.name;
+    document.getElementById('mode-toggle-label').textContent =
+      runtime.mode === 'edit' ? 'Show ▶' : '✏ Edit';
+
+    // Toggle visibility of timers based on mode and settings
+    const showTimer = document.getElementById('show-timer');
+    const cueTimer = document.getElementById('cue-timer');
+    const cubeStatusRow = document.getElementById('cube-status-row');
+
+    if (runtime.mode === 'show') {
+      showTimer.hidden = !state.settings.showTimerVisible;
+      cueTimer.hidden = !state.settings.cueTimerVisible;
+      cubeStatusRow.hidden = !state.settings.cubeStatusVisible;
+    } else {
+      showTimer.hidden = true;
+      cueTimer.hidden = true;
+      cubeStatusRow.hidden = true;
+    }
+
+    renderCubeStatus();
+
+    // Demo banner
+    document.getElementById('demo-banner').hidden = !state.settings.demoMode;
+  }
+
+  function renderCubeStatus() {
+    const row = document.getElementById('cube-status-row');
+    if (row.hidden) return;
+    row.innerHTML = '';
+    state.cubes.forEach(cube => {
+      const dot = document.createElement('span');
+      dot.className = `cube-status-dot ${runtime.cubeStatus[cube.id] || 'offline'}`;
+      dot.title = `Cube ${cube.id}: ${runtime.cubeStatus[cube.id] || 'offline'}`;
+      row.appendChild(dot);
+    });
+  }
+
+  // ----------------------------------------------------------------------
+  // Edit mode rendering
+  // ----------------------------------------------------------------------
+
+  function renderEditMode() {
+    document.getElementById('edit-mode').hidden = false;
+    document.getElementById('show-mode').hidden = true;
+    renderEditTab();
+  }
+
+  function renderEditTab() {
+    // Update active tab button
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.tab === runtime.activeTab);
+    });
+    // Show only the active panel
+    document.querySelectorAll('.tab-panel').forEach(panel => {
+      panel.classList.toggle('active', panel.id === `tab-${runtime.activeTab}`);
+    });
+
+    if (runtime.activeTab === 'cubes') renderCubesTab();
+    else if (runtime.activeTab === 'library') renderLibraryTab();
+    else if (runtime.activeTab === 'playlist') renderPlaylistTab();
+    else if (runtime.activeTab === 'quick') renderQuickConfigTab();
+    else if (runtime.activeTab === 'settings') renderSettingsTab();
+  }
+
+  function renderCubesTab() {
+    const list = document.getElementById('cube-list');
+    list.innerHTML = '';
+    state.cubes.forEach(cube => {
+      const card = document.createElement('div');
+      card.className = 'cube-card';
+      card.innerHTML = `
+        <div class="cube-card-header">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span class="cube-card-id">${cube.id}</span>
+            <span class="cube-card-name">${escapeHtml(cube.name)}</span>
+            <span class="cube-card-ip">${escapeHtml(cube.ip)}</span>
+            <span class="cube-status-dot ${runtime.cubeStatus[cube.id] || 'offline'}"></span>
+          </div>
+          <div class="cube-card-actions">
+            <button class="btn btn-secondary edit-cube-btn" data-cube-id="${cube.id}" type="button">Bearbeiten</button>
+            <button class="btn btn-icon test-cube-btn" data-cube-id="${cube.id}" type="button" title="Verbindung testen">⟳</button>
+            <button class="btn btn-icon delete-cube-btn" data-cube-id="${cube.id}" type="button" title="Entfernen">🗑</button>
+          </div>
+        </div>
+        <div class="cube-card-strips">
+          ${cube.strips.map(s => `
+            <div class="cube-strip-row">
+              <span class="cube-strip-marker"></span>
+              <span>Strip ${s.id}: "${escapeHtml(s.name)}", ${s.ledCount} LEDs</span>
+            </div>
+          `).join('')}
+        </div>
+      `;
+      list.appendChild(card);
+    });
+
+    // Wire up actions
+    list.querySelectorAll('.edit-cube-btn').forEach(btn => {
+      btn.addEventListener('click', () => editCube(parseInt(btn.dataset.cubeId, 10)));
+    });
+    list.querySelectorAll('.test-cube-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const cubeId = parseInt(btn.dataset.cubeId, 10);
+        const cube = state.cubes.find(c => c.id === cubeId);
+        toast(`Teste Verbindung zu ${cube.name}...`);
+        const info = await fetchCubeInfo(cube);
+        if (info) {
+          toast(`${cube.name}: verbunden (${info.name || 'WLED'})`, 'success');
+        } else {
+          toast(`${cube.name}: nicht erreichbar`, 'error');
+        }
+        renderCubesTab();
+      });
+    });
+    list.querySelectorAll('.delete-cube-btn').forEach(btn => {
+      btn.addEventListener('click', () => deleteCube(parseInt(btn.dataset.cubeId, 10)));
+    });
+  }
+
+  function renderLibraryTab() {
+    const list = document.getElementById('library-list');
+    const searchInput = document.getElementById('library-search');
+    const search = (searchInput.value || '').toLowerCase();
+    list.innerHTML = '';
+
+    const filtered = state.library.filter(cue =>
+      !search || cue.name.toLowerCase().includes(search) || (cue.description || '').toLowerCase().includes(search)
+    );
+
+    filtered.forEach(cue => {
+      const usage = state.playlist.filter(p => p.libraryId === cue.id).length;
+      const row = document.createElement('div');
+      row.className = 'library-row';
+      row.innerHTML = `
+        <div class="cube-indicators">${renderCubeIndicators(cue)}</div>
+        <div class="library-row-name">
+          <span>${escapeHtml(cue.name)}</span>
+          ${cue.description ? `<span class="library-row-description">${escapeHtml(cue.description)}</span>` : ''}
+        </div>
+        <span class="library-row-fade">${cue.fadeTime || 0} ms</span>
+        <span class="library-row-usage ${usage === 0 ? 'unused' : ''}">
+          ${usage > 0 ? `${usage}× in Playlist` : '0× ungenutzt'}
+        </span>
+        <div class="library-row-actions">
+          <button class="btn btn-icon edit-cue-btn" data-id="${cue.id}" title="Bearbeiten">✏️</button>
+          <button class="btn btn-icon dup-cue-btn" data-id="${cue.id}" title="Duplizieren">📋</button>
+          <button class="btn btn-icon test-cue-btn" data-id="${cue.id}" title="Test feuern">🔥</button>
+          <button class="btn btn-icon delete-cue-btn" data-id="${cue.id}" title="Löschen">🗑</button>
+        </div>
+      `;
+      list.appendChild(row);
+    });
+
+    list.querySelectorAll('.edit-cue-btn').forEach(btn => {
+      btn.addEventListener('click', () => openCueEditor(btn.dataset.id));
+    });
+    list.querySelectorAll('.dup-cue-btn').forEach(btn => {
+      btn.addEventListener('click', () => duplicateCue(btn.dataset.id));
+    });
+    list.querySelectorAll('.test-cue-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const cue = state.library.find(c => c.id === btn.dataset.id);
+        if (cue) {
+          toast(`Test: ${cue.name}`);
+          await fireCue(cue);
+        }
+      });
+    });
+    list.querySelectorAll('.delete-cue-btn').forEach(btn => {
+      btn.addEventListener('click', () => deleteCue(btn.dataset.id));
+    });
+  }
+
+  function renderCubeIndicators(cue) {
+    let html = '';
+    state.cubes.forEach(cube => {
+      const cubeActions = cue.actions.filter(a => a.cubeId === cube.id);
+      const isActive = cubeActions.some(a => a.mode !== 'off');
+      let color = 'transparent';
+      if (isActive) {
+        const customAction = cubeActions.find(a => a.mode === 'custom' && a.rgbw);
+        if (customAction) {
+          const [r, g, b, w] = customAction.rgbw;
+          color = `rgb(${Math.min(255, r + w / 2)}, ${Math.min(255, g + w / 2)}, ${Math.min(255, b + w / 2)})`;
+        } else {
+          color = '#888';
+        }
+      }
+      html += `<span class="cube-indicator ${isActive ? 'active' : ''}" style="background:${color}"></span>`;
+    });
+    return html;
+  }
+
+  function renderPlaylistTab() {
+    const list = document.getElementById('playlist-list');
+    list.innerHTML = '';
+
+    if (state.playlist.length === 0) {
+      list.innerHTML = '<p class="hint">Playlist ist leer. Klicke "Cue am Ende anhängen" um anzufangen.</p>';
+    }
+
+    state.playlist.forEach((entry, idx) => {
+      const cue = state.library.find(c => c.id === entry.libraryId);
+      if (!cue) {
+        const errRow = document.createElement('div');
+        errRow.className = 'playlist-row';
+        errRow.innerHTML = `<span class="playlist-position">${idx + 1}</span>
+          <span style="color: var(--accent-emergency);">⚠ Cue gelöscht</span>
+          <span></span>
+          <button class="btn btn-icon remove-pl-btn" data-idx="${idx}">🗑</button>`;
+        list.appendChild(errRow);
+        return;
+      }
+
+      // Insert-row above
+      const insertRow = document.createElement('div');
+      insertRow.className = 'insert-cue-row';
+      insertRow.dataset.position = idx;
+      insertRow.textContent = '+ hier einfügen';
+      insertRow.addEventListener('click', () => openInsertCueDropdown(idx));
+      list.appendChild(insertRow);
+
+      // Playlist row
+      const row = document.createElement('div');
+      row.className = 'playlist-row';
+      row.innerHTML = `
+        <span class="playlist-position">${idx + 1}</span>
+        <div class="playlist-cue-name">
+          ${escapeHtml(cue.name)}
+          <div class="cube-indicators" style="margin-top:4px;">${renderCubeIndicators(cue)}</div>
+        </div>
+        <div class="playlist-note">
+          <input type="text" value="${escapeHtml(entry.note || '')}" placeholder="Notiz..." data-idx="${idx}">
+        </div>
+        <div class="playlist-actions">
+          <button class="btn btn-icon move-up-btn" data-idx="${idx}" ${idx === 0 ? 'disabled' : ''} title="Hoch">▲</button>
+          <button class="btn btn-icon move-dn-btn" data-idx="${idx}" ${idx === state.playlist.length - 1 ? 'disabled' : ''} title="Runter">▼</button>
+          <button class="btn btn-icon remove-pl-btn" data-idx="${idx}" title="Entfernen">🗑</button>
+        </div>
+      `;
+      list.appendChild(row);
+    });
+
+    // Final insert-row
+    const insertEnd = document.createElement('div');
+    insertEnd.className = 'insert-cue-row';
+    insertEnd.dataset.position = state.playlist.length;
+    insertEnd.textContent = '+ hier einfügen';
+    insertEnd.addEventListener('click', () => openInsertCueDropdown(state.playlist.length));
+    list.appendChild(insertEnd);
+
+    // Wire up
+    list.querySelectorAll('.move-up-btn').forEach(btn => {
+      btn.addEventListener('click', () => movePlaylistEntry(parseInt(btn.dataset.idx, 10), -1));
+    });
+    list.querySelectorAll('.move-dn-btn').forEach(btn => {
+      btn.addEventListener('click', () => movePlaylistEntry(parseInt(btn.dataset.idx, 10), 1));
+    });
+    list.querySelectorAll('.remove-pl-btn').forEach(btn => {
+      btn.addEventListener('click', () => removePlaylistEntry(parseInt(btn.dataset.idx, 10)));
+    });
+    list.querySelectorAll('.playlist-note input').forEach(input => {
+      input.addEventListener('input', () => {
+        const idx = parseInt(input.dataset.idx, 10);
+        state.playlist[idx].note = input.value;
+        saveState();
+      });
+    });
+
+    document.getElementById('playlist-count').textContent = `Gesamt: ${state.playlist.length} Cues`;
+  }
+
+  function renderQuickConfigTab() {
+    const list = document.getElementById('quick-config-list');
+    list.innerHTML = '';
+
+    const slotCount = state.settings.quickButtonSlots || 8;
+
+    for (let i = 1; i <= slotCount; i++) {
+      const slot = state.quickButtons.find(q => q.slot === i) || { slot: i, libraryId: null, label: '', color: '#ffffff' };
+      const row = document.createElement('div');
+      row.className = 'quick-config-row';
+      row.innerHTML = `
+        <span class="quick-config-slot">${i}</span>
+        <select data-slot="${i}" class="quick-cue-select">
+          <option value="">— leer —</option>
+          ${state.library.map(cue => `
+            <option value="${cue.id}" ${slot.libraryId === cue.id ? 'selected' : ''}>${escapeHtml(cue.name)}</option>
+          `).join('')}
+        </select>
+        <input type="text" placeholder="Label-Override" value="${escapeHtml(slot.label || '')}" data-slot="${i}" class="quick-label-input">
+        <input type="color" value="${slot.color || '#ffffff'}" data-slot="${i}" class="quick-color-input">
+        <button class="btn btn-icon clear-quick-btn" data-slot="${i}" title="Slot leeren">🗑</button>
+      `;
+      list.appendChild(row);
+    }
+
+    list.querySelectorAll('.quick-cue-select').forEach(sel => {
+      sel.addEventListener('change', () => {
+        const slot = parseInt(sel.dataset.slot, 10);
+        updateQuickButton(slot, { libraryId: sel.value || null });
+      });
+    });
+    list.querySelectorAll('.quick-label-input').forEach(inp => {
+      inp.addEventListener('input', () => {
+        const slot = parseInt(inp.dataset.slot, 10);
+        updateQuickButton(slot, { label: inp.value });
+      });
+    });
+    list.querySelectorAll('.quick-color-input').forEach(inp => {
+      inp.addEventListener('input', () => {
+        const slot = parseInt(inp.dataset.slot, 10);
+        updateQuickButton(slot, { color: inp.value });
+      });
+    });
+    list.querySelectorAll('.clear-quick-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const slot = parseInt(btn.dataset.slot, 10);
+        state.quickButtons = state.quickButtons.filter(q => q.slot !== slot);
+        saveState();
+        renderQuickConfigTab();
+      });
+    });
+  }
+
+  function updateQuickButton(slot, updates) {
+    let qb = state.quickButtons.find(q => q.slot === slot);
+    if (!qb) {
+      qb = { slot, libraryId: null, label: '', color: '#ffffff' };
+      state.quickButtons.push(qb);
+    }
+    Object.assign(qb, updates);
+    if (!qb.libraryId) {
+      state.quickButtons = state.quickButtons.filter(q => q.slot !== slot);
+    }
+    saveState();
+  }
+
+  function renderSettingsTab() {
+    const s = state.settings;
+    document.getElementById('setting-jump-fade').value = s.jumpFadeMs;
+    document.getElementById('setting-show-timer').checked = s.showTimerVisible;
+    document.getElementById('setting-cue-timer').checked = s.cueTimerVisible;
+    document.getElementById('setting-cube-status').checked = s.cubeStatusVisible;
+    document.getElementById('setting-quick-slots').value = s.quickButtonSlots;
+    document.getElementById('setting-request-timeout').value = s.requestTimeoutMs;
+    document.getElementById('setting-reconnect-poll').value = s.reconnectPollMs;
+    document.getElementById('setting-demo-mode').checked = s.demoMode;
+    document.getElementById('snapshot-info').textContent = `Letzte Snapshots: ${state.snapshots.length} verfügbar`;
+  }
+
+  // ----------------------------------------------------------------------
+  // Show mode rendering
+  // ----------------------------------------------------------------------
+
+  function renderShowMode() {
+    document.getElementById('edit-mode').hidden = true;
+    document.getElementById('show-mode').hidden = false;
+
+    renderShowColumns();
+    renderQuickBar();
+  }
+
+  function renderShowColumns() {
+    const past = document.getElementById('past-list');
+    const next = document.getElementById('next-list');
+    const current = document.getElementById('current-cue-card');
+
+    past.innerHTML = '';
+    next.innerHTML = '';
+    current.innerHTML = '';
+
+    if (state.playlist.length === 0) {
+      current.innerHTML = '<p class="hint" style="text-align:center; padding:24px;">Playlist ist leer. Wechsle zum Edit-Modus und füge Cues hinzu.</p>';
+      return;
+    }
+
+    const ptr = runtime.playlistPointer;
+
+    // Past entries
+    for (let i = 0; i < ptr; i++) {
+      past.appendChild(renderSideCueCard(state.playlist[i], i, true));
+    }
+
+    // Current entry
+    const currentEntry = state.playlist[ptr];
+    if (currentEntry) {
+      current.innerHTML = renderCurrentCueCard(currentEntry, ptr);
+      wireCurrentCueCardEvents();
+    }
+
+    // Next entries
+    for (let i = ptr + 1; i < state.playlist.length; i++) {
+      next.appendChild(renderSideCueCard(state.playlist[i], i, false));
+    }
+  }
+
+  function renderSideCueCard(entry, idx, isPast) {
+    const cue = state.library.find(c => c.id === entry.libraryId);
+    const card = document.createElement('div');
+    card.className = 'cue-card-side';
+    card.dataset.idx = idx;
+    if (!cue) {
+      card.innerHTML = `
+        <span class="position">${idx + 1}</span>
+        <span class="name" style="color:var(--accent-emergency);">⚠ Cue gelöscht</span>
+      `;
+    } else {
+      card.innerHTML = `
+        <span class="position">${isPast ? '<span class="check">✓</span>' : ''}${String(idx + 1).padStart(2, '0')}</span>
+        <span class="name">${escapeHtml(cue.name)}</span>
+        <div class="cube-indicators">${renderCubeIndicators(cue)}</div>
+        ${entry.note ? `<span class="note">${escapeHtml(entry.note)}</span>` : ''}
+      `;
+    }
+    card.addEventListener('click', () => openJumpPopover(idx));
+    return card;
+  }
+
+  function renderCurrentCueCard(entry, idx) {
+    const cue = state.library.find(c => c.id === entry.libraryId);
+    if (!cue) {
+      return `<p style="color:var(--accent-emergency);">⚠ Cue gelöscht (Position ${idx + 1})</p>`;
+    }
+
+    const detail = describeActions(cue);
+
+    return `
+      <div class="current-position">${String(idx + 1).padStart(2, '0')}</div>
+      <div class="current-name">${escapeHtml(cue.name)}</div>
+      <div class="current-cube-grid">
+        ${state.cubes.map(cube => {
+          const actions = cue.actions.filter(a => a.cubeId === cube.id);
+          const active = actions.some(a => a.mode !== 'off');
+          let bgs = '';
+          if (active) {
+            actions.forEach(a => {
+              if (a.mode === 'custom' && a.rgbw) {
+                const [r, g, b, w] = a.rgbw;
+                bgs += `<div class="strip-bar" style="background:rgb(${Math.min(255, r + w / 2)},${Math.min(255, g + w / 2)},${Math.min(255, b + w / 2)})"></div>`;
+              } else {
+                bgs += '<div class="strip-bar" style="background:#888;"></div>';
+              }
+            });
+          }
+          return `
+            <div class="current-cube-card ${active ? '' : 'inactive'}">
+              <span class="label">${cube.id}</span>
+              ${bgs || '<div class="strip-bar"></div>'}
+            </div>
+          `;
+        }).join('')}
+      </div>
+      <div class="current-detail">${escapeHtml(detail)}</div>
+      <div class="current-fade">Fade: ${cue.fadeTime || 0} ms</div>
+      ${entry.note ? `<div class="current-note">${escapeHtml(entry.note)}</div>` : ''}
+      <div class="current-actions">
+        <button class="btn btn-prev" id="current-prev-btn">◀ Prev</button>
+        <button class="btn btn-go" id="current-go-btn">GO ▶</button>
+        <button class="btn live-edit-btn" id="current-edit-btn">✏️ Live-Edit</button>
+      </div>
+    `;
+  }
+
+  function describeActions(cue) {
+    const activeCubes = [];
+    state.cubes.forEach(cube => {
+      const cubeActions = cue.actions.filter(a => a.cubeId === cube.id && a.mode !== 'off');
+      if (cubeActions.length > 0) {
+        const desc = cubeActions.map(a => {
+          if (a.mode === 'custom') return colorName(a.rgbw, a.brightness);
+          if (a.mode === 'preset') return `Preset ${a.presetId}`;
+          if (a.mode === 'effect') return `Effekt ${a.effectId}`;
+          return '?';
+        }).join(', ');
+        activeCubes.push(`Cube ${cube.id}: ${desc}`);
+      }
+    });
+    if (activeCubes.length === 0) return 'Alle aus';
+    if (activeCubes.length === state.cubes.length && new Set(activeCubes.map(s => s.split(': ')[1])).size === 1) {
+      return `Alle: ${activeCubes[0].split(': ')[1]}`;
+    }
+    return activeCubes.join('  •  ');
+  }
+
+  function colorName(rgbw, brightness) {
+    if (!rgbw) return '?';
+    const [r, g, b, w] = rgbw;
+    const briStr = brightness != null ? ` ${brightness}%` : '';
+    if (r === 0 && g === 0 && b === 0 && w === 0) return 'aus';
+    if (r === 0 && g === 0 && b === 0 && w > 0) return `Warmweiß${briStr}`;
+    if (r > 0 && g === 0 && b === 0) return `Rot${briStr}`;
+    if (r === 0 && g > 0 && b === 0) return `Grün${briStr}`;
+    if (r === 0 && g === 0 && b > 0) return `Blau${briStr}`;
+    if (r > 0 && g > 0 && b === 0) return `Gelb${briStr}`;
+    if (r === 0 && g > 0 && b > 0) return `Cyan${briStr}`;
+    if (r > 0 && g === 0 && b > 0) return `Magenta${briStr}`;
+    if (r === 255 && g === 255 && b === 255) return `Weiß${briStr}`;
+    return `RGB(${r},${g},${b}${w ? ',W' + w : ''})${briStr}`;
+  }
+
+  function wireCurrentCueCardEvents() {
+    const goBtn = document.getElementById('current-go-btn');
+    const prevBtn = document.getElementById('current-prev-btn');
+    const editBtn = document.getElementById('current-edit-btn');
+    const card = document.getElementById('current-cue-card');
+
+    if (goBtn) goBtn.addEventListener('click', goNext);
+    if (prevBtn) prevBtn.addEventListener('click', goPrev);
+    if (editBtn) editBtn.addEventListener('click', openLiveEdit);
+
+    // Tap on current card (not on buttons) = refresh/refire
+    if (card) {
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('.current-actions')) return;
+        refireCurrent();
+      });
+    }
+  }
+
+  function renderQuickBar() {
+    const bar = document.getElementById('quick-bar');
+    bar.innerHTML = '';
+
+    const slotCount = state.settings.quickButtonSlots || 8;
+    for (let i = 1; i <= slotCount; i++) {
+      const qb = state.quickButtons.find(q => q.slot === i);
+      if (!qb || !qb.libraryId) continue;
+      const cue = state.library.find(c => c.id === qb.libraryId);
+      if (!cue) continue;
+
+      const btn = document.createElement('button');
+      btn.className = 'quick-btn';
+      btn.dataset.slot = i;
+      btn.innerHTML = `
+        <span class="quick-btn-color" style="background:${qb.color || '#fff'}"></span>
+        <span>${escapeHtml(qb.label || cue.name)}</span>
+        <span class="quick-btn-shortcut">${i === 10 ? '0' : i}</span>
+      `;
+      btn.addEventListener('click', () => fireQuickButton(i));
+      bar.appendChild(btn);
+    }
+  }
+
+  // ==========================================================================
+  // Cue triggering and playlist navigation
+  // ==========================================================================
+
+  async function goNext() {
+    if (state.playlist.length === 0) return;
+    const entry = state.playlist[runtime.playlistPointer];
+    const cue = state.library.find(c => c.id === entry.libraryId);
+    if (!cue) {
+      toast('Cue nicht in Bibliothek gefunden', 'error');
+      return;
+    }
+
+    if (!runtime.showStartTime) {
+      runtime.showStartTime = Date.now();
+      startShowTimer();
+    }
+    runtime.cueStartTime = Date.now();
+    startCueTimer();
+
+    await fireCue(cue);
+
+    // Move pointer forward (if not at end)
+    if (runtime.playlistPointer < state.playlist.length - 1) {
+      runtime.playlistPointer++;
+    }
+    renderShowColumns();
+  }
+
+  function goPrev() {
+    if (runtime.playlistPointer > 0) {
+      runtime.playlistPointer--;
+      renderShowColumns();
+    }
+  }
+
+  async function refireCurrent() {
+    const entry = state.playlist[runtime.playlistPointer];
+    if (!entry) return;
+    const cue = state.library.find(c => c.id === entry.libraryId);
+    if (!cue) return;
+    await fireCue(cue);
+    runtime.cueStartTime = Date.now();
+    startCueTimer();
+  }
+
+  async function jumpToCue(idx, withFade) {
+    if (idx < 0 || idx >= state.playlist.length) return;
+    const entry = state.playlist[idx];
+    const cue = state.library.find(c => c.id === entry.libraryId);
+    if (!cue) return;
+
+    runtime.playlistPointer = idx;
+    runtime.cueStartTime = Date.now();
+    startCueTimer();
+
+    const fadeMs = withFade ? state.settings.jumpFadeMs : 0;
+    await fireCue(cue, fadeMs);
+
+    renderShowColumns();
+  }
+
+  async function fireQuickButton(slot) {
+    const qb = state.quickButtons.find(q => q.slot === slot);
+    if (!qb) return;
+    const cue = state.library.find(c => c.id === qb.libraryId);
+    if (!cue) return;
+
+    // Visual feedback
+    const btn = document.querySelector(`.quick-btn[data-slot="${slot}"]`);
+    if (btn) {
+      btn.classList.add('firing');
+      setTimeout(() => btn.classList.remove('firing'), 200);
+    }
+
+    await fireCue(cue);
+    // Note: do NOT advance playlist pointer
+  }
+
+  // ==========================================================================
+  // Timers
+  // ==========================================================================
+
+  function startShowTimer() {
+    if (runtime.showTimerInterval) return;
+    runtime.showTimerInterval = setInterval(() => {
+      const el = document.getElementById('show-timer');
+      if (el && !el.hidden) {
+        el.textContent = `Show ${formatDuration(Date.now() - runtime.showStartTime)}`;
+      }
+    }, 1000);
+  }
+
+  function startCueTimer() {
+    if (runtime.cueTimerInterval) clearInterval(runtime.cueTimerInterval);
+    runtime.cueTimerInterval = setInterval(() => {
+      const el = document.getElementById('cue-timer');
+      if (el && !el.hidden) {
+        el.textContent = `Cue ${formatDuration(Date.now() - runtime.cueStartTime)}`;
+      }
+    }, 1000);
+  }
+
+  function formatDuration(ms) {
+    const total = Math.floor(ms / 1000);
+    const hours = Math.floor(total / 3600);
+    const mins = Math.floor((total % 3600) / 60);
+    const secs = total % 60;
+    return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  }
+
+  // ==========================================================================
+  // Edit cube CRUD
+  // ==========================================================================
+
+  function editCube(cubeId) {
+    const cube = state.cubes.find(c => c.id === cubeId);
+    if (!cube) return;
+
+    const newName = prompt('Cube-Name:', cube.name);
+    if (newName === null) return;
+    cube.name = newName.trim() || cube.name;
+
+    const newIp = prompt('IP-Adresse:', cube.ip);
+    if (newIp === null) return;
+    cube.ip = newIp.trim() || cube.ip;
+
+    const newStripCount = parseInt(prompt('Anzahl Strips (1 oder 2):', cube.strips.length), 10);
+    if (newStripCount && newStripCount >= 1 && newStripCount <= 2) {
+      while (cube.strips.length < newStripCount) {
+        cube.strips.push({ id: cube.strips.length, name: cube.strips.length === 0 ? 'innen' : 'außen', ledCount: 80 });
+      }
+      while (cube.strips.length > newStripCount) {
+        cube.strips.pop();
+      }
+    }
+
+    saveState();
+    renderCubesTab();
+    toast(`${cube.name} aktualisiert`, 'success');
+  }
+
+  function deleteCube(cubeId) {
+    confirmDialog(
+      'Cube entfernen?',
+      `Cube ${cubeId} wird entfernt. Alle Cues, die diesen Cube verwenden, behalten ihre Aktion-Definition, können aber nicht mehr triggern.`,
+      () => {
+        state.cubes = state.cubes.filter(c => c.id !== cubeId);
+        saveState();
+        renderCubesTab();
+        toast(`Cube ${cubeId} entfernt`, 'success');
+      }
+    );
+  }
+
+  function addCube() {
+    const nextId = Math.max(0, ...state.cubes.map(c => c.id)) + 1;
+    const newCube = {
+      id: nextId,
+      name: `Cube ${nextId}`,
+      ip: `192.168.77.${100 + nextId}`,
+      strips: [{ id: 0, name: 'innen', ledCount: 80 }],
+    };
+    state.cubes.push(newCube);
+    runtime.cubeStatus[newCube.id] = 'offline';
+    saveState();
+    renderCubesTab();
+    toast(`Cube ${nextId} hinzugefügt`, 'success');
+  }
+
+  // ==========================================================================
+  // Cue CRUD
+  // ==========================================================================
+
+  function openCueEditor(cueId) {
+    const cue = cueId ? state.library.find(c => c.id === cueId) : makeNewCue();
+    if (!cue) return;
+
+    document.getElementById('cue-editor-title').textContent = cueId ? `Cue bearbeiten: ${cue.name}` : 'Neuer Cue';
+    document.getElementById('cue-editor-name').value = cue.name;
+    document.getElementById('cue-editor-description').value = cue.description || '';
+    document.getElementById('cue-editor-fade').value = cue.fadeTime || 0;
+
+    renderCueEditorActions(cue);
+
+    const modal = document.getElementById('cue-editor-modal');
+    modal.hidden = false;
+    modal.dataset.editingId = cueId || '';
+
+    document.getElementById('cue-editor-save').onclick = () => saveCueEditor(cueId);
+  }
+
+  function makeNewCue() {
+    return {
+      id: 'cue-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+      name: 'Neuer Cue',
+      description: '',
+      fadeTime: 500,
+      actions: state.cubes.map(c => ({ cubeId: c.id, stripId: 0, mode: 'off' })),
+    };
+  }
+
+  function renderCueEditorActions(cue) {
+    const container = document.getElementById('cue-editor-actions');
+    container.innerHTML = '';
+
+    state.cubes.forEach(cube => {
+      const cubeActive = cue.actions.some(a => a.cubeId === cube.id && a.mode !== 'off');
+
+      const section = document.createElement('div');
+      section.className = 'cube-action-section';
+      section.innerHTML = `
+        <div class="cube-action-header">
+          <input type="checkbox" id="cube-active-${cube.id}" ${cubeActive ? 'checked' : ''}>
+          <label for="cube-active-${cube.id}">Cube ${cube.id} ${cube.name ? '— ' + escapeHtml(cube.name) : ''}</label>
+        </div>
+        <div id="cube-strips-${cube.id}" ${cubeActive ? '' : 'hidden'}>
+          ${cube.strips.map(strip => renderStripEditor(cube, strip, cue)).join('')}
+        </div>
+      `;
+      container.appendChild(section);
+    });
+
+    // Wire up checkboxes
+    state.cubes.forEach(cube => {
+      const checkbox = container.querySelector(`#cube-active-${cube.id}`);
+      const stripsDiv = container.querySelector(`#cube-strips-${cube.id}`);
+      checkbox.addEventListener('change', () => {
+        if (checkbox.checked) {
+          stripsDiv.hidden = false;
+          // Convert all 'off' strips to 'custom' default
+          cube.strips.forEach(strip => {
+            const action = cue.actions.find(a => a.cubeId === cube.id && a.stripId === strip.id);
+            if (!action || action.mode === 'off') {
+              if (action) {
+                action.mode = 'custom';
+                action.rgbw = action.rgbw || [255, 255, 255, 0];
+                action.brightness = action.brightness || 80;
+              } else {
+                cue.actions.push({ cubeId: cube.id, stripId: strip.id, mode: 'custom', rgbw: [255, 255, 255, 0], brightness: 80 });
+              }
+            }
+          });
+          renderCueEditorActions(cue);
+        } else {
+          stripsDiv.hidden = true;
+          cue.actions.filter(a => a.cubeId === cube.id).forEach(a => { a.mode = 'off'; });
+        }
+      });
+    });
+
+    // Wire up strip controls
+    state.cubes.forEach(cube => {
+      cube.strips.forEach(strip => {
+        wireStripEditor(cube, strip, cue);
+      });
+    });
+  }
+
+  function renderStripEditor(cube, strip, cue) {
+    let action = cue.actions.find(a => a.cubeId === cube.id && a.stripId === strip.id);
+    if (!action) {
+      action = { cubeId: cube.id, stripId: strip.id, mode: 'off' };
+      cue.actions.push(action);
+    }
+
+    const rgbwHex = action.rgbw ? rgbToHex(action.rgbw) : '#ffffff';
+    const brightness = action.brightness != null ? action.brightness : 80;
+
+    return `
+      <div class="cube-action-strip" data-cube="${cube.id}" data-strip="${strip.id}">
+        <h5>Strip ${strip.id}: "${escapeHtml(strip.name)}"</h5>
+        <div class="mode-radio-group">
+          <label><input type="radio" name="mode-${cube.id}-${strip.id}" value="off" ${action.mode === 'off' ? 'checked' : ''}> Aus</label>
+          <label><input type="radio" name="mode-${cube.id}-${strip.id}" value="custom" ${action.mode === 'custom' ? 'checked' : ''}> Custom</label>
+          <label><input type="radio" name="mode-${cube.id}-${strip.id}" value="preset" ${action.mode === 'preset' ? 'checked' : ''}> Preset</label>
+        </div>
+        <div class="form-row">
+          <label>Helligkeit</label>
+          <input type="range" min="0" max="100" step="1" value="${brightness}" class="strip-brightness">
+          <span class="value-display">${brightness}%</span>
+        </div>
+        <div class="form-row mode-custom-controls" ${action.mode === 'custom' ? '' : 'hidden'}>
+          <label>Farbe</label>
+          <input type="color" value="${rgbwHex}" class="strip-color">
+        </div>
+        <div class="form-row mode-preset-controls" ${action.mode === 'preset' ? '' : 'hidden'}>
+          <label>Preset-ID</label>
+          <input type="number" min="1" max="250" value="${action.presetId || 1}" class="strip-preset">
+        </div>
+        ${strip.id > 0 ? `<button class="btn btn-secondary copy-strip0-btn" data-cube="${cube.id}" data-strip="${strip.id}" type="button">Werte von Strip 0 übernehmen</button>` : ''}
+      </div>
+    `;
+  }
+
+  function wireStripEditor(cube, strip, cue) {
+    const container = document.querySelector(`.cube-action-strip[data-cube="${cube.id}"][data-strip="${strip.id}"]`);
+    if (!container) return;
+
+    const action = cue.actions.find(a => a.cubeId === cube.id && a.stripId === strip.id);
+
+    container.querySelectorAll('input[type="radio"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        action.mode = radio.value;
+        if (action.mode === 'custom' && !action.rgbw) {
+          action.rgbw = [255, 255, 255, 0];
+          action.brightness = action.brightness || 80;
+        }
+        if (action.mode === 'preset' && !action.presetId) {
+          action.presetId = 1;
+        }
+        container.querySelector('.mode-custom-controls').hidden = action.mode !== 'custom';
+        container.querySelector('.mode-preset-controls').hidden = action.mode !== 'preset';
+      });
+    });
+
+    const briSlider = container.querySelector('.strip-brightness');
+    const briDisplay = briSlider.nextElementSibling;
+    briSlider.addEventListener('input', () => {
+      action.brightness = parseInt(briSlider.value, 10);
+      briDisplay.textContent = `${action.brightness}%`;
+    });
+
+    const colorPicker = container.querySelector('.strip-color');
+    if (colorPicker) {
+      colorPicker.addEventListener('input', () => {
+        action.rgbw = hexToRgbw(colorPicker.value, action.rgbw ? action.rgbw[3] : 0);
+      });
+    }
+
+    const presetInput = container.querySelector('.strip-preset');
+    if (presetInput) {
+      presetInput.addEventListener('input', () => {
+        action.presetId = parseInt(presetInput.value, 10) || 1;
+      });
+    }
+
+    const copyBtn = container.querySelector('.copy-strip0-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        const sourceAction = cue.actions.find(a => a.cubeId === cube.id && a.stripId === 0);
+        if (sourceAction) {
+          Object.assign(action, JSON.parse(JSON.stringify(sourceAction)), { stripId: strip.id });
+          renderCueEditorActions(cue);
+        }
+      });
+    }
+  }
+
+  function saveCueEditor(originalId) {
+    const modal = document.getElementById('cue-editor-modal');
+    const editingId = modal.dataset.editingId;
+    let cue = editingId ? state.library.find(c => c.id === editingId) : null;
+
+    const newName = document.getElementById('cue-editor-name').value.trim();
+    if (!newName) {
+      toast('Name darf nicht leer sein', 'error');
+      return;
+    }
+
+    // Check name uniqueness (skip if editing same cue)
+    const dup = state.library.find(c => c.name === newName && c.id !== (cue ? cue.id : null));
+    if (dup) {
+      toast(`Name '${newName}' wird bereits verwendet`, 'error');
+      return;
+    }
+
+    if (!cue) {
+      cue = makeNewCue();
+      state.library.push(cue);
+    }
+
+    cue.name = newName;
+    cue.description = document.getElementById('cue-editor-description').value;
+    cue.fadeTime = parseInt(document.getElementById('cue-editor-fade').value, 10) || 0;
+
+    saveState();
+    closeCueEditor();
+    renderLibraryTab();
+    toast(`Cue '${cue.name}' gespeichert`, 'success');
+  }
+
+  function closeCueEditor() {
+    document.getElementById('cue-editor-modal').hidden = true;
+  }
+
+  function duplicateCue(cueId) {
+    const cue = state.library.find(c => c.id === cueId);
+    if (!cue) return;
+    const newName = prompt('Name für die Kopie:', `${cue.name} (Kopie)`);
+    if (!newName) return;
+    if (state.library.some(c => c.name === newName)) {
+      toast(`Name '${newName}' wird bereits verwendet`, 'error');
+      return;
+    }
+    const dupCue = JSON.parse(JSON.stringify(cue));
+    dupCue.id = 'cue-' + Date.now();
+    dupCue.name = newName;
+    state.library.push(dupCue);
+    saveState();
+    renderLibraryTab();
+    toast(`'${newName}' erstellt`, 'success');
+  }
+
+  function deleteCue(cueId) {
+    const cue = state.library.find(c => c.id === cueId);
+    if (!cue) return;
+    const usage = state.playlist.filter(p => p.libraryId === cueId).length;
+
+    if (usage === 0) {
+      confirmDialog('Cue löschen?', `'${cue.name}' wird aus der Bibliothek entfernt.`, () => {
+        snapshotState();
+        state.library = state.library.filter(c => c.id !== cueId);
+        saveState();
+        renderLibraryTab();
+        toast(`'${cue.name}' gelöscht`, 'success');
+      });
+    } else {
+      confirmDialog(
+        'Cue wird verwendet',
+        `'${cue.name}' wird in ${usage} Playlist-Position(en) verwendet. Cue UND alle Verwendungen löschen?`,
+        () => {
+          snapshotState();
+          state.library = state.library.filter(c => c.id !== cueId);
+          state.playlist = state.playlist.filter(p => p.libraryId !== cueId);
+          saveState();
+          renderLibraryTab();
+          renderPlaylistTab();
+          toast(`'${cue.name}' und ${usage} Playlist-Verwendung(en) gelöscht`, 'success');
+        }
+      );
+    }
+  }
+
+  // ==========================================================================
+  // Playlist CRUD
+  // ==========================================================================
+
+  function openInsertCueDropdown(position) {
+    const dropdown = document.getElementById('insert-cue-dropdown');
+    const list = document.getElementById('insert-cue-list');
+    const search = document.getElementById('insert-cue-search');
+
+    const renderList = (filter = '') => {
+      list.innerHTML = '';
+      const f = filter.toLowerCase();
+      state.library
+        .filter(cue => !f || cue.name.toLowerCase().includes(f))
+        .forEach(cue => {
+          const li = document.createElement('li');
+          li.innerHTML = `
+            <span class="name">${escapeHtml(cue.name)}</span>
+            <span class="meta">${cue.fadeTime || 0} ms · ${cue.description ? escapeHtml(cue.description) : ''}</span>
+          `;
+          li.addEventListener('click', () => {
+            insertPlaylistEntry(position, cue.id);
+            closeInsertCueDropdown();
+          });
+          list.appendChild(li);
+        });
+    };
+
+    renderList();
+    search.value = '';
+    search.oninput = () => renderList(search.value);
+
+    dropdown.hidden = false;
+    setTimeout(() => search.focus(), 50);
+  }
+
+  function closeInsertCueDropdown() {
+    document.getElementById('insert-cue-dropdown').hidden = true;
+  }
+
+  function insertPlaylistEntry(position, libraryId) {
+    state.playlist.splice(position, 0, { libraryId, note: '' });
+    saveState();
+    renderPlaylistTab();
+    toast('Cue eingefügt', 'success');
+  }
+
+  function appendPlaylistEntry(libraryId) {
+    state.playlist.push({ libraryId, note: '' });
+    saveState();
+    renderPlaylistTab();
+  }
+
+  function removePlaylistEntry(idx) {
+    const removed = state.playlist[idx];
+    state.playlist.splice(idx, 1);
+    saveState();
+    renderPlaylistTab();
+    const cue = state.library.find(c => c.id === removed.libraryId);
+    toastWithUndo(`'${cue ? cue.name : 'Eintrag'}' entfernt`, () => {
+      state.playlist.splice(idx, 0, removed);
+      saveState();
+      renderPlaylistTab();
+    });
+  }
+
+  function movePlaylistEntry(idx, direction) {
+    const newIdx = idx + direction;
+    if (newIdx < 0 || newIdx >= state.playlist.length) return;
+    const tmp = state.playlist[idx];
+    state.playlist[idx] = state.playlist[newIdx];
+    state.playlist[newIdx] = tmp;
+    saveState();
+    renderPlaylistTab();
+  }
+
+  // ==========================================================================
+  // Live edit modal
+  // ==========================================================================
+
+  function openLiveEdit() {
+    const entry = state.playlist[runtime.playlistPointer];
+    if (!entry) return;
+    const cue = state.library.find(c => c.id === entry.libraryId);
+    if (!cue) return;
+
+    runtime.liveEditCueId = cue.id;
+    runtime.liveEditPreState = JSON.parse(JSON.stringify(cue));
+
+    document.getElementById('live-edit-title').textContent = `Live-Edit: ${cue.name}`;
+
+    const masterBri = 100;
+    document.getElementById('live-master-brightness').value = masterBri;
+    document.getElementById('live-master-brightness-value').textContent = `${masterBri}%`;
+
+    renderLiveEditCubeList(cue);
+
+    const modal = document.getElementById('live-edit-modal');
+    modal.hidden = false;
+
+    // Wire master brightness
+    const masterSlider = document.getElementById('live-master-brightness');
+    masterSlider.oninput = () => {
+      document.getElementById('live-master-brightness-value').textContent = `${masterSlider.value}%`;
+      debouncedLivePreview('master', () => fireCue(cue, 100));
+    };
+  }
+
+  function renderLiveEditCubeList(cue) {
+    const container = document.getElementById('live-cube-list');
+    container.innerHTML = '';
+
+    state.cubes.forEach(cube => {
+      const cubeActions = cue.actions.filter(a => a.cubeId === cube.id);
+      const isActive = cubeActions.some(a => a.mode !== 'off');
+
+      const section = document.createElement('div');
+      section.className = 'live-cube-section';
+      section.innerHTML = `
+        <div class="live-cube-header ${isActive ? '' : 'inactive'}" data-cube="${cube.id}">
+          <strong>Cube ${cube.id}</strong>
+          <span>${isActive ? '(aktiv)' : '(inaktiv)'}</span>
+        </div>
+        <div class="live-cube-body" ${isActive ? '' : 'hidden'}>
+          ${cube.strips.map(strip => {
+            const action = cubeActions.find(a => a.stripId === strip.id);
+            if (!action || action.mode === 'off') return '';
+            const bri = action.brightness != null ? action.brightness : 100;
+            return `
+              <div class="form-row">
+                <label>Strip ${strip.id} Helligkeit</label>
+                <input type="range" min="0" max="100" step="1" value="${bri}"
+                       data-cube="${cube.id}" data-strip="${strip.id}" class="live-strip-brightness">
+                <span class="value-display">${bri}%</span>
+              </div>
+              ${action.mode === 'custom' && action.rgbw ? `
+                <div class="form-row">
+                  <label>Strip ${strip.id} Farbe</label>
+                  <input type="color" value="${rgbToHex(action.rgbw)}"
+                         data-cube="${cube.id}" data-strip="${strip.id}" class="live-strip-color">
+                </div>
+              ` : ''}
+            `;
+          }).join('')}
+        </div>
+      `;
+      container.appendChild(section);
+    });
+
+    // Wire live preview
+    container.querySelectorAll('.live-strip-brightness').forEach(slider => {
+      slider.addEventListener('input', () => {
+        const cubeId = parseInt(slider.dataset.cube, 10);
+        const stripId = parseInt(slider.dataset.strip, 10);
+        const cue = state.library.find(c => c.id === runtime.liveEditCueId);
+        const action = cue.actions.find(a => a.cubeId === cubeId && a.stripId === stripId);
+        if (action) {
+          action.brightness = parseInt(slider.value, 10);
+          slider.nextElementSibling.textContent = `${action.brightness}%`;
+          debouncedLivePreview(`${cubeId}-${stripId}`, () => {
+            const cube = state.cubes.find(c => c.id === cubeId);
+            const body = buildCubeStateBody(cube, [action], 100);
+            sendToCube(cube, body);
+          });
+        }
+      });
+    });
+
+    container.querySelectorAll('.live-strip-color').forEach(picker => {
+      picker.addEventListener('input', () => {
+        const cubeId = parseInt(picker.dataset.cube, 10);
+        const stripId = parseInt(picker.dataset.strip, 10);
+        const cue = state.library.find(c => c.id === runtime.liveEditCueId);
+        const action = cue.actions.find(a => a.cubeId === cubeId && a.stripId === stripId);
+        if (action) {
+          action.rgbw = hexToRgbw(picker.value, action.rgbw ? action.rgbw[3] : 0);
+          debouncedLivePreview(`${cubeId}-${stripId}-c`, () => {
+            const cube = state.cubes.find(c => c.id === cubeId);
+            const body = buildCubeStateBody(cube, [action], 100);
+            sendToCube(cube, body);
+          });
+        }
+      });
+    });
+  }
+
+  function debouncedLivePreview(key, fn) {
+    if (runtime.liveEditDebounceTimers[key]) {
+      clearTimeout(runtime.liveEditDebounceTimers[key]);
+    }
+    runtime.liveEditDebounceTimers[key] = setTimeout(fn, LIVE_EDIT_DEBOUNCE_MS);
+  }
+
+  function discardLiveEdit() {
+    if (runtime.liveEditPreState) {
+      const idx = state.library.findIndex(c => c.id === runtime.liveEditCueId);
+      if (idx >= 0) {
+        state.library[idx] = runtime.liveEditPreState;
+      }
+      // Re-fire to restore cube state
+      const cue = state.library.find(c => c.id === runtime.liveEditCueId);
+      if (cue) fireCue(cue);
+    }
+    closeLiveEdit();
+    toast('Änderungen verworfen');
+  }
+
+  function saveLiveEditOne() {
+    saveState();
+    closeLiveEdit();
+    renderShowColumns();
+    toast('Cue aktualisiert', 'success');
+  }
+
+  function saveLiveEditAll() {
+    const editedCue = state.library.find(c => c.id === runtime.liveEditCueId);
+    if (!editedCue) return;
+
+    const sameCues = state.library.filter(c => c.name === editedCue.name && c.id !== editedCue.id);
+
+    if (sameCues.length === 0) {
+      saveLiveEditOne();
+      return;
+    }
+
+    confirmDialog(
+      'Alle gleichen Cues aktualisieren?',
+      `${sameCues.length + 1} Cues mit Namen '${editedCue.name}' werden aktualisiert.`,
+      () => {
+        sameCues.forEach(c => {
+          c.actions = JSON.parse(JSON.stringify(editedCue.actions));
+          c.fadeTime = editedCue.fadeTime;
+        });
+        saveState();
+        closeLiveEdit();
+        renderShowColumns();
+        toast(`${sameCues.length + 1} Cues aktualisiert`, 'success');
+      }
+    );
+  }
+
+  function closeLiveEdit() {
+    document.getElementById('live-edit-modal').hidden = true;
+    runtime.liveEditCueId = null;
+    runtime.liveEditPreState = null;
+  }
+
+  // ==========================================================================
+  // Jump popover
+  // ==========================================================================
+
+  function openJumpPopover(idx) {
+    if (idx === runtime.playlistPointer) return;
+    const entry = state.playlist[idx];
+    if (!entry) return;
+    const cue = state.library.find(c => c.id === entry.libraryId);
+    if (!cue) return;
+
+    document.getElementById('jump-popover-title').textContent = `Zu Cue ${idx + 1} springen?`;
+    document.getElementById('jump-popover-name').textContent = cue.name;
+    document.getElementById('jump-popover-indicators').innerHTML = renderCubeIndicators(cue);
+    document.getElementById('jump-popover-note').textContent = entry.note || '';
+
+    const popover = document.getElementById('jump-popover');
+    popover.hidden = false;
+    popover.dataset.targetIdx = idx;
+
+    document.getElementById('jump-with-fade').onclick = () => {
+      jumpToCue(idx, true);
+      closeJumpPopover();
+    };
+    document.getElementById('jump-immediate').onclick = () => {
+      jumpToCue(idx, false);
+      closeJumpPopover();
+    };
+    document.getElementById('jump-cancel').onclick = closeJumpPopover;
+  }
+
+  function closeJumpPopover() {
+    document.getElementById('jump-popover').hidden = true;
+  }
+
+  // ==========================================================================
+  // Mode switching
+  // ==========================================================================
+
+  function switchMode() {
+    if (runtime.mode === 'edit') {
+      runtime.mode = 'show';
+    } else {
+      // Confirm if cue is running
+      if (runtime.cueStartTime) {
+        confirmDialog(
+          'Show beenden?',
+          'Die Show läuft. Wirklich in den Edit-Modus wechseln?',
+          () => {
+            runtime.mode = 'edit';
+            stopShowTimers();
+            renderAll();
+          }
+        );
+        return;
+      }
+      runtime.mode = 'edit';
+    }
+    renderAll();
+  }
+
+  function stopShowTimers() {
+    if (runtime.showTimerInterval) {
+      clearInterval(runtime.showTimerInterval);
+      runtime.showTimerInterval = null;
+    }
+    if (runtime.cueTimerInterval) {
+      clearInterval(runtime.cueTimerInterval);
+      runtime.cueTimerInterval = null;
+    }
+    runtime.showStartTime = null;
+    runtime.cueStartTime = null;
+  }
+
+  // ==========================================================================
+  // Emergency
+  // ==========================================================================
+
+  async function triggerEmergency() {
+    if (!runtime.pendingEmergencyConfirm) {
+      runtime.pendingEmergencyConfirm = true;
+      document.getElementById('emergency-btn').classList.add('armed');
+      toast('Notfall? Nochmal drücken zum Auslösen', 'warning');
+      runtime.emergencyConfirmTimeout = setTimeout(() => {
+        runtime.pendingEmergencyConfirm = false;
+        document.getElementById('emergency-btn').classList.remove('armed');
+      }, 2000);
+      return;
+    }
+
+    clearTimeout(runtime.emergencyConfirmTimeout);
+    runtime.pendingEmergencyConfirm = false;
+    document.getElementById('emergency-btn').classList.remove('armed');
+
+    // Find the emergency cue (by ID or by name fallback)
+    let emergencyCue = state.library.find(c => c.id === 'lib-notfall');
+    if (!emergencyCue) emergencyCue = state.library.find(c => c.name.toLowerCase().includes('notfall'));
+    if (!emergencyCue) {
+      // Hardcoded emergency: all cubes white max
+      emergencyCue = {
+        id: 'emergency-fallback',
+        name: 'NOTFALL',
+        fadeTime: 0,
+        actions: state.cubes.map(c => ({
+          cubeId: c.id,
+          stripId: 0,
+          mode: 'custom',
+          rgbw: [255, 255, 255, 255],
+          brightness: 100,
+        })),
+      };
+    }
+
+    await fireCue(emergencyCue);
+    toast('NOTFALL ausgelöst — Vollweiß aktiv', 'warning');
+  }
+
+  // ==========================================================================
+  // Auto-reconnect polling
+  // ==========================================================================
+
+  function startReconnectPolling() {
+    if (runtime.reconnectInterval) clearInterval(runtime.reconnectInterval);
+    runtime.reconnectInterval = setInterval(async () => {
+      const offlineCubes = state.cubes.filter(c => runtime.cubeStatus[c.id] === 'offline');
+      for (const cube of offlineCubes) {
+        const info = await fetchCubeInfo(cube);
+        if (info) {
+          renderCubeStatus();
+          toast(`${cube.name} wieder verbunden`, 'success');
+        }
+      }
+    }, state.settings.reconnectPollMs || DEFAULT_RECONNECT_POLL_MS);
+  }
+
+  // ==========================================================================
+  // Toast and dialog system
+  // ==========================================================================
+
+  function toast(message, type = '') {
+    const container = document.getElementById('toast-container');
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.innerHTML = `<span>${escapeHtml(message)}</span>`;
+    container.appendChild(el);
+    setTimeout(() => el.remove(), 3000);
+  }
+
+  function toastWithUndo(message, undoFn) {
+    const container = document.getElementById('toast-container');
+    const el = document.createElement('div');
+    el.className = 'toast';
+    el.innerHTML = `<span>${escapeHtml(message)}</span>`;
+    const btn = document.createElement('button');
+    btn.className = 'toast-undo';
+    btn.textContent = 'Rückgängig';
+    btn.onclick = () => {
+      undoFn();
+      el.remove();
+    };
+    el.appendChild(btn);
+    container.appendChild(el);
+    setTimeout(() => el.remove(), 5000);
+  }
+
+  function confirmDialog(title, message, onConfirm) {
+    document.getElementById('confirm-title').textContent = title;
+    document.getElementById('confirm-message').textContent = message;
+    const modal = document.getElementById('confirm-modal');
+    modal.hidden = false;
+    const okBtn = document.getElementById('confirm-ok');
+    const cancelBtn = document.getElementById('confirm-cancel');
+    okBtn.onclick = () => {
+      modal.hidden = true;
+      onConfirm();
+    };
+    cancelBtn.onclick = () => {
+      modal.hidden = true;
+    };
+  }
+
+  // ==========================================================================
+  // Snapshots dialog
+  // ==========================================================================
+
+  function showSnapshots() {
+    const tbody = document.getElementById('snapshots-tbody');
+    tbody.innerHTML = '';
+    state.snapshots.forEach(snap => {
+      const tr = document.createElement('tr');
+      const date = new Date(snap.timestamp);
+      tr.innerHTML = `
+        <td>${date.toLocaleString('de-DE')}</td>
+        <td>${snap.data.cubes.length}</td>
+        <td>${snap.data.library.length}</td>
+        <td>${snap.data.playlist.length}</td>
+        <td><button class="btn btn-secondary restore-snap-btn" data-ts="${snap.timestamp}">Wiederherstellen</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+    tbody.querySelectorAll('.restore-snap-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        confirmDialog(
+          'Snapshot wiederherstellen?',
+          'Die aktuelle Konfiguration wird durch den Snapshot ersetzt. Vorher wird automatisch ein Snapshot des aktuellen Stands erstellt.',
+          () => {
+            restoreSnapshot(btn.dataset.ts);
+            document.getElementById('snapshots-modal').hidden = true;
+          }
+        );
+      });
+    });
+    document.getElementById('snapshots-modal').hidden = false;
+  }
+
+  // ==========================================================================
+  // Import/export
+  // ==========================================================================
+
+  function exportConfig() {
+    const json = JSON.stringify(state, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `cube-control-${state.show.name.replace(/\s+/g, '-')}-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('Konfiguration exportiert', 'success');
+  }
+
+  function importConfigFile(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const imported = JSON.parse(e.target.result);
+        if (!imported.version || !imported.cubes || !imported.library) {
+          toast('Datei ist keine gültige Cube-Control-Konfiguration', 'error');
+          return;
+        }
+        confirmDialog(
+          'Import bestätigen?',
+          'Die aktuelle Konfiguration wird überschrieben. Vorher wird automatisch ein Snapshot erstellt.',
+          () => {
+            snapshotState();
+            state = imported;
+            saveState(true);
+            renderAll();
+            toast('Konfiguration importiert', 'success');
+          }
+        );
+      } catch (err) {
+        toast('Fehler beim Lesen der Datei: ' + err.message, 'error');
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  // ==========================================================================
+  // Utility functions
+  // ==========================================================================
+
+  function escapeHtml(str) {
+    if (str == null) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function rgbToHex(rgbw) {
+    const [r, g, b] = rgbw;
+    return '#' + [r, g, b].map(c => c.toString(16).padStart(2, '0')).join('');
+  }
+
+  function hexToRgbw(hex, w = 0) {
+    const bigint = parseInt(hex.slice(1), 16);
+    return [(bigint >> 16) & 255, (bigint >> 8) & 255, bigint & 255, w];
+  }
+
+  // ==========================================================================
+  // Event wiring
+  // ==========================================================================
+
+  function wireGlobalEvents() {
+    // Mode toggle
+    document.getElementById('mode-toggle-btn').addEventListener('click', switchMode);
+
+    // Emergency
+    document.getElementById('emergency-btn').addEventListener('click', triggerEmergency);
+
+    // Edit-mode tabs
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        runtime.activeTab = btn.dataset.tab;
+        renderEditTab();
+      });
+    });
+
+    // Cubes tab
+    document.getElementById('add-cube-btn').addEventListener('click', addCube);
+
+    // Library tab
+    document.getElementById('add-cue-btn').addEventListener('click', () => openCueEditor(null));
+    document.getElementById('library-search').addEventListener('input', renderLibraryTab);
+
+    // Playlist tab
+    document.getElementById('append-cue-btn').addEventListener('click', () => openInsertCueDropdown(state.playlist.length));
+    document.getElementById('export-playlist-btn').addEventListener('click', exportConfig);
+    document.getElementById('import-playlist-btn').addEventListener('click', () => document.getElementById('import-file-input').click());
+    document.getElementById('import-file-input').addEventListener('change', (e) => {
+      if (e.target.files[0]) importConfigFile(e.target.files[0]);
+      e.target.value = '';
+    });
+
+    // Settings tab
+    const settingsInputs = {
+      'setting-jump-fade': v => { state.settings.jumpFadeMs = parseInt(v, 10) || 500; },
+      'setting-show-timer': v => { state.settings.showTimerVisible = v; },
+      'setting-cue-timer': v => { state.settings.cueTimerVisible = v; },
+      'setting-cube-status': v => { state.settings.cubeStatusVisible = v; },
+      'setting-quick-slots': v => { state.settings.quickButtonSlots = parseInt(v, 10) || 8; renderQuickConfigTab(); renderQuickBar(); },
+      'setting-request-timeout': v => { state.settings.requestTimeoutMs = parseInt(v, 10) || 1500; },
+      'setting-reconnect-poll': v => { state.settings.reconnectPollMs = parseInt(v, 10) || 5000; startReconnectPolling(); },
+      'setting-demo-mode': v => { state.settings.demoMode = v; renderTopBar(); },
+    };
+    Object.entries(settingsInputs).forEach(([id, handler]) => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('change', () => {
+          handler(el.type === 'checkbox' ? el.checked : el.value);
+          saveState();
+        });
+      }
+    });
+
+    document.getElementById('show-snapshots-btn').addEventListener('click', showSnapshots);
+    document.getElementById('snapshots-close').addEventListener('click', () => {
+      document.getElementById('snapshots-modal').hidden = true;
+    });
+    document.getElementById('manual-snapshot-btn').addEventListener('click', () => {
+      snapshotState();
+      toast('Snapshot gespeichert', 'success');
+      renderSettingsTab();
+    });
+    document.getElementById('export-all-btn').addEventListener('click', exportConfig);
+    document.getElementById('import-all-btn').addEventListener('click', () => document.getElementById('import-file-input').click());
+    document.getElementById('reset-all-btn').addEventListener('click', () => {
+      confirmDialog('Werkseinstellungen?', 'Alle Daten werden gelöscht. Fortfahren?', () => {
+        localStorage.removeItem(STORAGE_KEY);
+        state = makeDefaultState();
+        saveState(true);
+        renderAll();
+        toast('Werkseinstellungen wiederhergestellt', 'success');
+      });
+    });
+
+    // Cue editor modal
+    document.getElementById('cue-editor-close').addEventListener('click', closeCueEditor);
+    document.getElementById('cue-editor-cancel').addEventListener('click', closeCueEditor);
+
+    // Live edit modal
+    document.getElementById('live-edit-close').addEventListener('click', closeLiveEdit);
+    document.getElementById('live-edit-discard').addEventListener('click', discardLiveEdit);
+    document.getElementById('live-edit-save-one').addEventListener('click', saveLiveEditOne);
+    document.getElementById('live-edit-save-all').addEventListener('click', saveLiveEditAll);
+
+    // Insert cue dropdown
+    document.getElementById('insert-cue-cancel').addEventListener('click', closeInsertCueDropdown);
+
+    // Click outside popover/dropdown to close
+    document.getElementById('jump-popover').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('jump-popover')) closeJumpPopover();
+    });
+    document.getElementById('insert-cue-dropdown').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('insert-cue-dropdown')) closeInsertCueDropdown();
+    });
+
+    // Keyboard shortcuts (show mode)
+    document.addEventListener('keydown', handleKeyboard);
+
+    // Prevent leaving during active show
+    window.addEventListener('beforeunload', (e) => {
+      if (runtime.mode === 'show' && runtime.showStartTime) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
+  }
+
+  function handleKeyboard(e) {
+    // Don't intercept if in input field
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
+
+    if (runtime.mode !== 'show') return;
+
+    switch (e.key) {
+      case ' ':
+      case 'Spacebar':
+        e.preventDefault();
+        goNext();
+        break;
+      case 'ArrowLeft':
+        e.preventDefault();
+        goPrev();
+        break;
+      case 'r':
+      case 'R':
+        e.preventDefault();
+        refireCurrent();
+        break;
+      case 'e':
+      case 'E':
+        e.preventDefault();
+        openLiveEdit();
+        break;
+      case 'Escape':
+        e.preventDefault();
+        triggerEmergency();
+        break;
+      case '0':
+      case '1':
+      case '2':
+      case '3':
+      case '4':
+      case '5':
+      case '6':
+      case '7':
+      case '8':
+      case '9':
+        e.preventDefault();
+        const slot = e.key === '0' ? 10 : parseInt(e.key, 10);
+        fireQuickButton(slot);
+        break;
+    }
+  }
+
+  // ==========================================================================
+  // Initialization
+  // ==========================================================================
+
+  function init() {
+    loadState();
+    wireGlobalEvents();
+    renderAll();
+    startReconnectPolling();
+
+    // Initial cube status check
+    state.cubes.forEach(cube => {
+      fetchCubeInfo(cube).then(() => renderCubeStatus());
+    });
+
+    console.log('Cube Control V1 initialized');
+    console.log('State:', state);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+})();
+  </script>
+</body>
+</html>
