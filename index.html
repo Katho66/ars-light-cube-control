@@ -2107,6 +2107,69 @@ hr {
   const DEFAULT_REQUEST_TIMEOUT_MS = 1500;
   const DEFAULT_RECONNECT_POLL_MS = 5000;
 
+  // ==========================================================================
+  // WLED Effects Library (offline-verfügbar, WLED 0.15.x kompatibel)
+  // Quelle: kno.wled.ge/features/effects/
+  // ==========================================================================
+
+  const WLED_EFFECTS = [
+    // Basis
+    { id: 0, name: 'Solid', category: 'Basis', desc: 'Einfarbig' },
+    { id: 1, name: 'Blink', category: 'Basis', desc: 'Ein/Aus-Blinken' },
+    { id: 2, name: 'Breathe', category: 'Basis', desc: 'Sanftes Pulsieren' },
+    { id: 12, name: 'Fade', category: 'Basis', desc: 'Farbübergang' },
+    // Lauf-Effekte
+    { id: 3, name: 'Wipe', category: 'Lauf', desc: 'Farbwisch von einer Seite' },
+    { id: 4, name: 'Wipe Random', category: 'Lauf', desc: 'Wisch in zufälliger Farbe' },
+    { id: 10, name: 'Scan', category: 'Lauf', desc: 'Lauflicht hin und her' },
+    { id: 11, name: 'Scan Dual', category: 'Lauf', desc: 'Doppeltes Lauflicht' },
+    { id: 15, name: 'Running', category: 'Lauf', desc: 'Laufende Farbblöcke' },
+    { id: 28, name: 'Chase', category: 'Lauf', desc: 'Verfolgungslicht' },
+    { id: 30, name: 'Chase Rainbow', category: 'Lauf', desc: 'Regenbogen-Verfolgung' },
+    { id: 41, name: 'Meteor', category: 'Lauf', desc: 'Sternschnuppe' },
+    { id: 42, name: 'Meteor Smooth', category: 'Lauf', desc: 'Weiche Sternschnuppe' },
+    // Regenbogen & Farbe
+    { id: 8, name: 'Colorloop', category: 'Farbe', desc: 'Langsamer Farbwechsel' },
+    { id: 9, name: 'Rainbow', category: 'Farbe', desc: 'Regenbogen-Verlauf' },
+    { id: 5, name: 'Random Colors', category: 'Farbe', desc: 'Zufällige Farben' },
+    { id: 34, name: 'Colorful', category: 'Farbe', desc: 'Bunte Segmente' },
+    { id: 45, name: 'Palette', category: 'Farbe', desc: 'Palette als Verlauf' },
+    { id: 47, name: 'Colorwaves', category: 'Farbe', desc: 'Farbwellen' },
+    { id: 43, name: 'Pride 2015', category: 'Farbe', desc: 'Pride-Regenbogen weich' },
+    // Funkeln & Glitzer
+    { id: 16, name: 'Twinkle', category: 'Funkeln', desc: 'Einzelne Pixel blitzen' },
+    { id: 17, name: 'Twinkle Random', category: 'Funkeln', desc: 'Zufälliges Funkeln' },
+    { id: 18, name: 'Twinkle Fade', category: 'Funkeln', desc: 'Funkeln mit Ausblenden' },
+    { id: 20, name: 'Sparkle', category: 'Funkeln', desc: 'Weißes Glitzern (additiv)' },
+    { id: 21, name: 'Flash Sparkle', category: 'Funkeln', desc: 'Blitz-Glitzern' },
+    { id: 22, name: 'Hyper Sparkle', category: 'Funkeln', desc: 'Intensives Glitzern' },
+    { id: 39, name: 'Colortwinkles', category: 'Funkeln', desc: 'Buntes Funkeln' },
+    // Strobe & Flash
+    { id: 23, name: 'Strobe', category: 'Strobe', desc: 'Schnelles Blitzen' },
+    { id: 24, name: 'Strobe Rainbow', category: 'Strobe', desc: 'Regenbogen-Strobe' },
+    { id: 25, name: 'Strobe Mega', category: 'Strobe', desc: 'Mega-Blitzer' },
+    // Theater
+    { id: 13, name: 'Theater Chase', category: 'Theater', desc: 'Theater-Lauflicht' },
+    { id: 14, name: 'Theater Chase Rainbow', category: 'Theater', desc: 'Theater-Regenbogen' },
+    // Atmosphäre
+    { id: 38, name: 'Aurora', category: 'Atmosphäre', desc: 'Nordlicht' },
+    { id: 40, name: 'Lake', category: 'Atmosphäre', desc: 'See-Reflexionen' },
+    { id: 46, name: 'Fire 2012', category: 'Atmosphäre', desc: 'Feuer-Simulation' },
+    { id: 48, name: 'BPM', category: 'Atmosphäre', desc: 'Beat-Pulsieren' },
+    { id: 7, name: 'Dynamic', category: 'Atmosphäre', desc: 'Dynamische Segmente' },
+    { id: 44, name: 'Juggle', category: 'Atmosphäre', desc: 'Jonglier-Bälle' },
+  ];
+
+  // Effekte nach Kategorie gruppiert (für Dropdown)
+  function getEffectsByCategory() {
+    const groups = {};
+    WLED_EFFECTS.forEach(e => {
+      if (!groups[e.category]) groups[e.category] = [];
+      groups[e.category].push(e);
+    });
+    return groups;
+  }
+
   // Brightness scaling: WLED uses 0-255, our config uses 0-100
   const BRIGHTNESS_SCALE = 2.55;
 
@@ -2123,11 +2186,11 @@ hr {
         updatedAt: new Date().toISOString(),
       },
       cubes: [
-        { id: 1, name: 'Cube 1', ip: '192.168.77.101', strips: [{ id: 0, name: 'innen', ledCount: 80 }] },
-        { id: 2, name: 'Cube 2', ip: '192.168.77.102', strips: [{ id: 0, name: 'innen', ledCount: 80 }] },
-        { id: 3, name: 'Cube 3', ip: '192.168.77.103', strips: [{ id: 0, name: 'innen', ledCount: 80 }] },
-        { id: 4, name: 'Cube 4', ip: '192.168.77.104', strips: [{ id: 0, name: 'innen', ledCount: 80 }] },
-        { id: 5, name: 'Cube 5', ip: '192.168.77.105', strips: [{ id: 0, name: 'innen', ledCount: 80 }] },
+        { id: 1, name: 'Cube 1', ip: '192.168.77.101', strips: [{ id: 0, name: 'innen', ledCount: 80 }, { id: 1, name: 'außen', ledCount: 80 }] },
+        { id: 2, name: 'Cube 2', ip: '192.168.77.102', strips: [{ id: 0, name: 'innen', ledCount: 80 }, { id: 1, name: 'außen', ledCount: 80 }] },
+        { id: 3, name: 'Cube 3', ip: '192.168.77.103', strips: [{ id: 0, name: 'innen', ledCount: 80 }, { id: 1, name: 'außen', ledCount: 80 }] },
+        { id: 4, name: 'Cube 4', ip: '192.168.77.104', strips: [{ id: 0, name: 'innen', ledCount: 80 }, { id: 1, name: 'außen', ledCount: 80 }] },
+        { id: 5, name: 'Cube 5', ip: '192.168.77.105', strips: [{ id: 0, name: 'innen', ledCount: 80 }, { id: 1, name: 'außen', ledCount: 80 }] },
       ],
       library: [
         makeDefaultCue('lib-blackout', 'Blackout', 'Alle Cubes komplett aus', 0, 'off'),
@@ -2162,12 +2225,15 @@ hr {
   function makeDefaultCue(id, name, description, fadeTime, mode, rgbw, brightness) {
     const actions = [];
     for (let i = 1; i <= 5; i++) {
-      const action = { cubeId: i, stripId: 0, mode };
-      if (mode === 'custom') {
-        action.rgbw = rgbw;
-        action.brightness = brightness;
+      // Erstelle Aktionen für beide Strips (innen + außen)
+      for (let s = 0; s <= 1; s++) {
+        const action = { cubeId: i, stripId: s, mode };
+        if (mode === 'custom') {
+          action.rgbw = [...rgbw]; // Kopie, nicht Referenz
+          action.brightness = brightness;
+        }
+        actions.push(action);
       }
-      actions.push(action);
     }
     return { id, name, description, fadeTime, actions };
   }
@@ -3029,6 +3095,7 @@ hr {
       btn.innerHTML = `
         <span class="quick-btn-color" style="background:${qb.color || '#fff'}"></span>
         <span>${escapeHtml(qb.label || cue.name)}</span>
+        <div class="cube-indicators">${renderCubeIndicators(cue)}</div>
         <span class="quick-btn-shortcut">${i === 10 ? '0' : i}</span>
       `;
       btn.addEventListener('click', () => fireQuickButton(i));
@@ -3234,7 +3301,9 @@ hr {
       name: 'Neuer Cue',
       description: '',
       fadeTime: 500,
-      actions: state.cubes.map(c => ({ cubeId: c.id, stripId: 0, mode: 'off' })),
+      actions: state.cubes.flatMap(c =>
+        c.strips.map(s => ({ cubeId: c.id, stripId: s.id, mode: 'off' }))
+      ),
     };
   }
 
@@ -3312,6 +3381,7 @@ hr {
           <label><input type="radio" name="mode-${cube.id}-${strip.id}" value="off" ${action.mode === 'off' ? 'checked' : ''}> Aus</label>
           <label><input type="radio" name="mode-${cube.id}-${strip.id}" value="custom" ${action.mode === 'custom' ? 'checked' : ''}> Custom</label>
           <label><input type="radio" name="mode-${cube.id}-${strip.id}" value="preset" ${action.mode === 'preset' ? 'checked' : ''}> Preset</label>
+          <label><input type="radio" name="mode-${cube.id}-${strip.id}" value="effect" ${action.mode === 'effect' ? 'checked' : ''}> Effekt</label>
         </div>
         <div class="form-row">
           <label>Helligkeit</label>
@@ -3321,10 +3391,40 @@ hr {
         <div class="form-row mode-custom-controls" ${action.mode === 'custom' ? '' : 'hidden'}>
           <label>Farbe</label>
           <input type="color" value="${rgbwHex}" class="strip-color">
+          <label style="margin-left:12px">W</label>
+          <input type="range" min="0" max="255" step="1" value="${action.rgbw ? action.rgbw[3] : 0}" class="strip-white" style="max-width:120px">
+          <span class="value-display strip-white-value">${action.rgbw ? action.rgbw[3] : 0}</span>
         </div>
         <div class="form-row mode-preset-controls" ${action.mode === 'preset' ? '' : 'hidden'}>
-          <label>Preset-ID</label>
-          <input type="number" min="1" max="250" value="${action.presetId || 1}" class="strip-preset">
+          <label>Preset</label>
+          <input type="number" min="1" max="250" value="${action.presetId || 1}" class="strip-preset" style="max-width:80px">
+          <button class="btn btn-secondary load-presets-btn" data-cube="${cube.id}" type="button" style="font-size:12px">Von Cube laden</button>
+        </div>
+        <div class="mode-effect-controls" ${action.mode === 'effect' ? '' : 'hidden'}>
+          <div class="form-row">
+            <label>Effekt</label>
+            <select class="strip-effect-select">
+              ${Object.entries(getEffectsByCategory()).map(([cat, effects]) =>
+                `<optgroup label="${cat}">${effects.map(e =>
+                  `<option value="${e.id}" ${(action.effectId || 0) === e.id ? 'selected' : ''}>${e.name} — ${e.desc}</option>`
+                ).join('')}</optgroup>`
+              ).join('')}
+            </select>
+          </div>
+          <div class="form-row">
+            <label>Speed</label>
+            <input type="range" min="0" max="255" step="1" value="${action.speed != null ? action.speed : 128}" class="strip-effect-speed">
+            <span class="value-display">${action.speed != null ? action.speed : 128}</span>
+          </div>
+          <div class="form-row">
+            <label>Intensität</label>
+            <input type="range" min="0" max="255" step="1" value="${action.intensity != null ? action.intensity : 128}" class="strip-effect-intensity">
+            <span class="value-display">${action.intensity != null ? action.intensity : 128}</span>
+          </div>
+          <div class="form-row">
+            <label>Basisfarbe</label>
+            <input type="color" value="${rgbwHex}" class="strip-effect-color">
+          </div>
         </div>
         ${strip.id > 0 ? `<button class="btn btn-secondary copy-strip0-btn" data-cube="${cube.id}" data-strip="${strip.id}" type="button">Werte von Strip 0 übernehmen</button>` : ''}
       </div>
@@ -3347,8 +3447,15 @@ hr {
         if (action.mode === 'preset' && !action.presetId) {
           action.presetId = 1;
         }
+        if (action.mode === 'effect' && !action.effectId) {
+          action.effectId = 2; // Breathe als Default
+          action.speed = 128;
+          action.intensity = 128;
+        }
         container.querySelector('.mode-custom-controls').hidden = action.mode !== 'custom';
         container.querySelector('.mode-preset-controls').hidden = action.mode !== 'preset';
+        const effectControls = container.querySelector('.mode-effect-controls');
+        if (effectControls) effectControls.hidden = action.mode !== 'effect';
       });
     });
 
@@ -3366,10 +3473,68 @@ hr {
       });
     }
 
+    const whiteSlider = container.querySelector('.strip-white');
+    if (whiteSlider) {
+      const whiteDisplay = container.querySelector('.strip-white-value');
+      whiteSlider.addEventListener('input', () => {
+        const w = parseInt(whiteSlider.value, 10);
+        if (action.rgbw) action.rgbw[3] = w;
+        if (whiteDisplay) whiteDisplay.textContent = w;
+      });
+    }
+
     const presetInput = container.querySelector('.strip-preset');
     if (presetInput) {
       presetInput.addEventListener('input', () => {
         action.presetId = parseInt(presetInput.value, 10) || 1;
+      });
+    }
+
+    const loadPresetsBtn = container.querySelector('.load-presets-btn');
+    if (loadPresetsBtn) {
+      loadPresetsBtn.addEventListener('click', async () => {
+        const cubeId = parseInt(loadPresetsBtn.dataset.cube, 10);
+        const cube = state.cubes.find(c => c.id === cubeId);
+        if (!cube) return;
+        toast(`Lade Presets von ${cube.name}...`);
+        const presets = await fetchCubePresets(cube);
+        if (presets.length > 0) {
+          toast(`${presets.length} Presets geladen`, 'success');
+          // TODO: Dropdown mit geladenen Presets anzeigen
+        } else {
+          toast('Keine Presets gefunden (Cube offline oder CORS)', 'warning');
+        }
+      });
+    }
+
+    // Effekt-Controls
+    const effectSelect = container.querySelector('.strip-effect-select');
+    if (effectSelect) {
+      effectSelect.addEventListener('change', () => {
+        action.effectId = parseInt(effectSelect.value, 10);
+      });
+    }
+
+    const speedSlider = container.querySelector('.strip-effect-speed');
+    if (speedSlider) {
+      speedSlider.addEventListener('input', () => {
+        action.speed = parseInt(speedSlider.value, 10);
+        speedSlider.nextElementSibling.textContent = action.speed;
+      });
+    }
+
+    const intensitySlider = container.querySelector('.strip-effect-intensity');
+    if (intensitySlider) {
+      intensitySlider.addEventListener('input', () => {
+        action.intensity = parseInt(intensitySlider.value, 10);
+        intensitySlider.nextElementSibling.textContent = action.intensity;
+      });
+    }
+
+    const effectColor = container.querySelector('.strip-effect-color');
+    if (effectColor) {
+      effectColor.addEventListener('input', () => {
+        action.rgbw = hexToRgbw(effectColor.value, 0);
       });
     }
 
