@@ -2113,6 +2113,9 @@ hr {
   // ==========================================================================
 
   // Verifizierte IDs: kno.wled.ge/features/effects/ + github.com/wled/WLED/wiki
+  // ACHTUNG: Diese Liste gilt für WLED 0.15.x. Bei Firmware-Updates
+  // Effekt-IDs prüfen unter: http://<CUBE-IP>/json/effects
+  const WLED_FW_VERSION = '0.15.x';
   const WLED_EFFECTS = [
     // Basis / Statisch
     { id: 0, name: 'Solid', category: 'Basis', desc: 'Einfarbig — Haupt-Workhorse' },
@@ -2294,9 +2297,23 @@ hr {
         console.warn('Loaded state has no version, using as-is');
       }
       state = parsed;
-      // Initialize cube status
+      // Migration: Cubes mit nur 1 Strip auf 2 Strips erweitern
       state.cubes.forEach(c => {
+        if (c.strips.length < 2) {
+          c.strips.push({ id: 1, name: 'außen', ledCount: 80 });
+        }
         runtime.cubeStatus[c.id] = 'offline';
+      });
+      // Migration: Bestehende Cues um fehlende Strip-1-Aktionen ergänzen
+      state.library.forEach(cue => {
+        state.cubes.forEach(cube => {
+          cube.strips.forEach(strip => {
+            const hasAction = cue.actions.some(a => a.cubeId === cube.id && a.stripId === strip.id);
+            if (!hasAction) {
+              cue.actions.push({ cubeId: cube.id, stripId: strip.id, mode: 'off' });
+            }
+          });
+        });
       });
     } catch (err) {
       console.error('Failed to load state, using defaults', err);
@@ -3394,8 +3411,8 @@ hr {
         <div class="mode-radio-group">
           <label><input type="radio" name="mode-${cube.id}-${strip.id}" value="off" ${action.mode === 'off' ? 'checked' : ''}> Aus</label>
           <label><input type="radio" name="mode-${cube.id}-${strip.id}" value="custom" ${action.mode === 'custom' ? 'checked' : ''}> Custom</label>
-          <label><input type="radio" name="mode-${cube.id}-${strip.id}" value="preset" ${action.mode === 'preset' ? 'checked' : ''}> Preset</label>
-          <label><input type="radio" name="mode-${cube.id}-${strip.id}" value="effect" ${action.mode === 'effect' ? 'checked' : ''}> Effekt</label>
+          <label><input type="radio" name="mode-${cube.id}-${strip.id}" value="preset" ${action.mode === 'preset' ? 'checked' : ''}> UNO Presets</label>
+          <label><input type="radio" name="mode-${cube.id}-${strip.id}" value="effect" ${action.mode === 'effect' ? 'checked' : ''}> WLED Presetliste</label>
         </div>
         <div class="form-row">
           <label>Helligkeit</label>
