@@ -1845,6 +1845,7 @@ hr {
             <option value="">— Cue wählen —</option>
           </select>
           <button class="btn btn-secondary" id="preview-fire-btn" type="button">🔥 Test</button>
+          <button class="btn btn-secondary" id="preview-popout-btn" type="button">🪟 Pop-Out</button>
         </div>
       </div>
       <div id="preview-canvas" class="preview-canvas">
@@ -2181,6 +2182,276 @@ hr {
   // Quelle: kno.wled.ge/features/effects/
   // ==========================================================================
 
+  // ==========================================================================
+  // WLED Effect Simulator — approximiert WLED-Effekte im Browser
+  // Nicht pixel-perfekt, aber visuell nah am ESP32-Rendering
+  // ==========================================================================
+
+  class EffectSimulator {
+    constructor(ledCount) {
+      this.ledCount = ledCount;
+      this.pixels = [];
+      for (let i = 0; i < ledCount; i++) this.pixels.push([0, 0, 0, 0]);
+      this.frame = 0;
+      this.startTime = Date.now();
+    }
+
+    render(effectId, speed, intensity, baseColor) {
+      this.frame++;
+      const t = (Date.now() - this.startTime) / 1000; // Sekunden seit Start
+      const spd = (speed || 128) / 255;
+      const inten = (intensity || 128) / 255;
+      const col = baseColor || [255, 255, 255, 0];
+
+      switch (effectId) {
+        case 0: return this.solid(col);
+        case 1: return this.blink(col, spd, t);
+        case 2: return this.breathe(col, spd, t);
+        case 3: return this.wipe(col, spd, t);
+        case 6: return this.sweep(col, spd, t);
+        case 8: return this.colorloop(spd, t);
+        case 9: return this.rainbow(spd, t);
+        case 10: return this.scan(col, spd, t);
+        case 13: return this.theaterChase(col, spd, t);
+        case 17: return this.twinkle(col, inten, t);
+        case 20: return this.sparkle(col, inten);
+        case 23: return this.strobe(col, spd, t);
+        case 28: return this.chase(col, spd, inten, t);
+        case 57: return this.lightning(col);
+        case 66: return this.fire(inten, t);
+        case 76: return this.meteor(col, spd, t);
+        case 88: return this.candle(col);
+        case 100: return this.heartbeat(col, spd, t);
+        case 103: return this.solidGlitter(col);
+        case 104: return this.sunrise(col, spd, t);
+        default: return this.solid(col); // Fallback
+      }
+    }
+
+    solid(col) {
+      for (let i = 0; i < this.ledCount; i++) this.pixels[i] = [...col];
+      return this.pixels;
+    }
+
+    blink(col, spd, t) {
+      const on = Math.sin(t * spd * 6) > 0;
+      for (let i = 0; i < this.ledCount; i++) this.pixels[i] = on ? [...col] : [0, 0, 0, 0];
+      return this.pixels;
+    }
+
+    breathe(col, spd, t) {
+      const bri = (Math.sin(t * spd * 3) + 1) / 2;
+      for (let i = 0; i < this.ledCount; i++) {
+        this.pixels[i] = col.map(v => Math.round(v * bri));
+      }
+      return this.pixels;
+    }
+
+    wipe(col, spd, t) {
+      const pos = Math.floor((t * spd * 20) % (this.ledCount * 2));
+      for (let i = 0; i < this.ledCount; i++) {
+        this.pixels[i] = (pos < this.ledCount ? i <= pos : i > pos - this.ledCount) ? [...col] : [0, 0, 0, 0];
+      }
+      return this.pixels;
+    }
+
+    sweep(col, spd, t) {
+      const cycle = (t * spd * 10) % (this.ledCount * 2);
+      const pos = cycle < this.ledCount ? cycle : this.ledCount * 2 - cycle;
+      for (let i = 0; i < this.ledCount; i++) {
+        this.pixels[i] = i <= pos ? [...col] : [0, 0, 0, 0];
+      }
+      return this.pixels;
+    }
+
+    colorloop(spd, t) {
+      const hue = (t * spd * 50) % 360;
+      const rgb = this.hslToRgb(hue, 1, 0.5);
+      for (let i = 0; i < this.ledCount; i++) this.pixels[i] = [...rgb, 0];
+      return this.pixels;
+    }
+
+    rainbow(spd, t) {
+      for (let i = 0; i < this.ledCount; i++) {
+        const hue = ((i / this.ledCount) * 360 + t * spd * 60) % 360;
+        const rgb = this.hslToRgb(hue, 1, 0.5);
+        this.pixels[i] = [...rgb, 0];
+      }
+      return this.pixels;
+    }
+
+    scan(col, spd, t) {
+      const cycle = (t * spd * 15) % (this.ledCount * 2);
+      const pos = Math.floor(cycle < this.ledCount ? cycle : this.ledCount * 2 - cycle);
+      for (let i = 0; i < this.ledCount; i++) {
+        const dist = Math.abs(i - pos);
+        const bri = Math.max(0, 1 - dist / 4);
+        this.pixels[i] = col.map(v => Math.round(v * bri));
+      }
+      return this.pixels;
+    }
+
+    theaterChase(col, spd, t) {
+      const offset = Math.floor(t * spd * 10) % 3;
+      for (let i = 0; i < this.ledCount; i++) {
+        this.pixels[i] = (i + offset) % 3 === 0 ? [...col] : [0, 0, 0, 0];
+      }
+      return this.pixels;
+    }
+
+    twinkle(col, inten, t) {
+      const numActive = Math.max(1, Math.floor(this.ledCount * inten * 0.3));
+      // Langsam zufällige Pixel an/aus
+      for (let i = 0; i < this.ledCount; i++) {
+        const seed = Math.sin(i * 12.9898 + t * 2) * 43758.5453;
+        const val = seed - Math.floor(seed);
+        const bri = val < (numActive / this.ledCount) ? (0.5 + val) : 0;
+        this.pixels[i] = col.map(v => Math.round(v * bri));
+      }
+      return this.pixels;
+    }
+
+    sparkle(col, inten) {
+      // Hintergrundfarbe + zufällige weiße Blitze
+      for (let i = 0; i < this.ledCount; i++) {
+        if (Math.random() < inten * 0.1) {
+          this.pixels[i] = [255, 255, 255, 255]; // weißer Funke
+        } else {
+          this.pixels[i] = [...col];
+        }
+      }
+      return this.pixels;
+    }
+
+    strobe(col, spd, t) {
+      const on = Math.sin(t * spd * 30) > 0.8;
+      for (let i = 0; i < this.ledCount; i++) this.pixels[i] = on ? [...col] : [0, 0, 0, 0];
+      return this.pixels;
+    }
+
+    chase(col, spd, inten, t) {
+      const pos = Math.floor(t * spd * 20) % this.ledCount;
+      const width = Math.max(2, Math.floor(inten * 8));
+      for (let i = 0; i < this.ledCount; i++) {
+        const dist = (i - pos + this.ledCount) % this.ledCount;
+        const bri = dist < width ? 1 - dist / width : 0;
+        this.pixels[i] = col.map(v => Math.round(v * bri));
+      }
+      return this.pixels;
+    }
+
+    lightning(col) {
+      const flash = Math.random() < 0.05;
+      for (let i = 0; i < this.ledCount; i++) {
+        this.pixels[i] = flash ? [255, 255, 255, 200] : col.map(v => Math.round(v * 0.05));
+      }
+      return this.pixels;
+    }
+
+    fire(inten, t) {
+      for (let i = 0; i < this.ledCount; i++) {
+        const heat = Math.random() * 0.7 + 0.3 * inten;
+        const r = Math.min(255, Math.round(heat * 255));
+        const g = Math.min(255, Math.round(heat * heat * 180));
+        const b = Math.round(heat * heat * heat * 40);
+        this.pixels[i] = [r, g, b, 0];
+      }
+      return this.pixels;
+    }
+
+    meteor(col, spd, t) {
+      const pos = Math.floor(t * spd * 25) % (this.ledCount + 10);
+      for (let i = 0; i < this.ledCount; i++) {
+        const dist = pos - i;
+        if (dist >= 0 && dist < 10) {
+          const bri = 1 - dist / 10;
+          this.pixels[i] = col.map(v => Math.round(v * bri));
+        } else {
+          // Decay
+          this.pixels[i] = this.pixels[i].map(v => Math.max(0, Math.round(v * 0.85)));
+        }
+      }
+      return this.pixels;
+    }
+
+    candle(col) {
+      const flicker = 0.4 + Math.random() * 0.6;
+      for (let i = 0; i < this.ledCount; i++) {
+        const localFlicker = flicker * (0.8 + Math.random() * 0.2);
+        this.pixels[i] = [
+          Math.round(255 * localFlicker),
+          Math.round(120 * localFlicker),
+          Math.round(20 * localFlicker),
+          Math.round(40 * localFlicker)
+        ];
+      }
+      return this.pixels;
+    }
+
+    heartbeat(col, spd, t) {
+      const phase = (t * spd * 3) % (Math.PI * 2);
+      // Doppel-Puls wie Herzschlag
+      let bri = 0;
+      if (phase < 0.8) bri = Math.sin(phase * Math.PI / 0.8);
+      else if (phase > 1.2 && phase < 1.8) bri = Math.sin((phase - 1.2) * Math.PI / 0.6) * 0.6;
+      bri = Math.max(0, bri);
+      for (let i = 0; i < this.ledCount; i++) {
+        this.pixels[i] = col.map(v => Math.round(v * bri));
+      }
+      return this.pixels;
+    }
+
+    solidGlitter(col) {
+      for (let i = 0; i < this.ledCount; i++) {
+        if (Math.random() < 0.08) {
+          this.pixels[i] = [255, 255, 255, 255];
+        } else {
+          this.pixels[i] = [...col];
+        }
+      }
+      return this.pixels;
+    }
+
+    sunrise(col, spd, t) {
+      const progress = Math.min(1, (t * spd * 0.1) % 1.2);
+      for (let i = 0; i < this.ledCount; i++) {
+        const ledProgress = Math.min(1, progress * 1.5 - (i / this.ledCount) * 0.5);
+        const bri = Math.max(0, ledProgress);
+        const r = Math.round(Math.min(255, 255 * bri));
+        const g = Math.round(Math.min(255, 120 * bri * bri));
+        const b = Math.round(Math.min(255, 30 * bri * bri * bri));
+        const w = Math.round(col[3] * bri);
+        this.pixels[i] = [r, g, b, w];
+      }
+      return this.pixels;
+    }
+
+    // Hilfsfunktion: HSL zu RGB
+    hslToRgb(h, s, l) {
+      h /= 360;
+      const a = s * Math.min(l, 1 - l);
+      const f = (n) => {
+        const k = (n + h * 12) % 12;
+        return Math.round((l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1))) * 255);
+      };
+      return [f(0), f(8), f(4)];
+    }
+  }
+
+  // Globale Simulator-Instanzen pro Cube/Strip
+  const effectSimulators = {};
+  function getSimulator(cubeId, stripId, ledCount) {
+    const key = `${cubeId}-${stripId}`;
+    if (!effectSimulators[key] || effectSimulators[key].ledCount !== ledCount) {
+      effectSimulators[key] = new EffectSimulator(ledCount);
+    }
+    return effectSimulators[key];
+  }
+
+  // ==========================================================================
+  // WLED Effects Library
+  // ==========================================================================
+
   // Verifizierte IDs: kno.wled.ge/features/effects/ + github.com/wled/WLED/wiki
   // ACHTUNG: Diese Liste gilt für WLED 0.15.x. Bei Firmware-Updates
   // Effekt-IDs prüfen unter: http://<CUBE-IP>/json/effects
@@ -2347,6 +2618,9 @@ hr {
     emergencyConfirmTimeout: null,
     pendingEscConfirm: false,
     escConfirmTimeout: null,
+    previewAnimating: false,
+    previewAnimationFrame: null,
+    previewPopoutWindow: null,
   };
 
   // ==========================================================================
@@ -3086,15 +3360,44 @@ hr {
       svg += `<rect x="0" y="0" width="${cubeW}" height="${cubeH}" fill="none" stroke="#30363d" stroke-width="2" rx="6"/>`;
       svg += `<text x="${cubeW / 2}" y="${cubeH / 2}" text-anchor="middle" dominant-baseline="middle" fill="#404040" font-size="48" font-weight="700" font-family="sans-serif">${cube.id}</text>`;
 
-      // Strips rendern
+      // Strips rendern — per-Pixel wenn Effekt, sonst als Balken
       cube.strips.forEach(strip => {
         const position = getStripPosition(cube, strip.id);
         const posDef = STRIP_POSITIONS[position];
         if (!posDef) return;
-        const color = getStripColor(cube, strip.id, cue);
-        if (!color) return;
+
+        const action = cue ? cue.actions.find(a => a.cubeId === cube.id && a.stripId === strip.id) : null;
+        if (!action || action.mode === 'off') return;
+
         const rect = posDef.render(cubeW, cubeH, pad);
-        svg += `<rect x="${rect.x}" y="${rect.y}" width="${rect.width}" height="${rect.height}" fill="${color}" rx="3" opacity="0.9"/>`;
+        const isEffect = action.mode === 'effect';
+        const ledCount = Math.min(strip.ledCount || 20, 30); // Max 30 Punkte in Vorschau
+
+        if (isEffect && runtime.previewAnimating) {
+          // Per-Pixel-Rendering für Effekte
+          const sim = getSimulator(cube.id, strip.id, ledCount);
+          const pixels = sim.render(action.effectId || 0, action.speed, action.intensity, action.rgbw);
+          const isHorizontal = rect.width > rect.height;
+          for (let p = 0; p < ledCount; p++) {
+            const [r, g, b, w] = pixels[p];
+            const pr = Math.min(255, r + w / 2), pg = Math.min(255, g + w / 2), pb = Math.min(255, b + w / 2);
+            if (isHorizontal) {
+              const px = rect.x + (p / ledCount) * rect.width + rect.width / ledCount / 2;
+              const py = rect.y + rect.height / 2;
+              svg += `<circle cx="${px}" cy="${py}" r="${Math.min(rect.height / 2, rect.width / ledCount / 2.2)}" fill="rgb(${pr},${pg},${pb})" opacity="0.95"/>`;
+            } else {
+              const px = rect.x + rect.width / 2;
+              const py = rect.y + (p / ledCount) * rect.height + rect.height / ledCount / 2;
+              svg += `<circle cx="${px}" cy="${py}" r="${Math.min(rect.width / 2, rect.height / ledCount / 2.2)}" fill="rgb(${pr},${pg},${pb})" opacity="0.95"/>`;
+            }
+          }
+        } else {
+          // Einfacher farbiger Balken für Custom/Preset
+          const color = getStripColor(cube, strip.id, cue);
+          if (color) {
+            svg += `<rect x="${rect.x}" y="${rect.y}" width="${rect.width}" height="${rect.height}" fill="${color}" rx="3" opacity="0.9"/>`;
+          }
+        }
       });
 
       // Label
@@ -3179,6 +3482,131 @@ hr {
         }
       });
     }
+
+    // Pop-Out-Button
+    const popoutBtn = document.getElementById('preview-popout-btn');
+    if (popoutBtn) {
+      popoutBtn.addEventListener('click', openPreviewPopout);
+    }
+
+    // Animation starten wenn ein Cue mit Effekten gewählt ist
+    startPreviewAnimation(canvas, cueSelect);
+  }
+
+  function startPreviewAnimation(canvas, cueSelect) {
+    // Vorherige Animation stoppen
+    if (runtime.previewAnimationFrame) {
+      cancelAnimationFrame(runtime.previewAnimationFrame);
+      runtime.previewAnimationFrame = null;
+    }
+
+    runtime.previewAnimating = true;
+
+    function animLoop() {
+      if (!runtime.previewAnimating) return;
+      const selectedCueId = cueSelect ? cueSelect.value : null;
+      if (selectedCueId) {
+        const cue = state.library.find(c => c.id === selectedCueId);
+        const hasEffects = cue && cue.actions.some(a => a.mode === 'effect');
+        if (hasEffects) {
+          canvas.innerHTML = renderPreviewSVG(selectedCueId);
+        }
+      }
+      runtime.previewAnimationFrame = requestAnimationFrame(animLoop);
+    }
+
+    // Nur starten, wenn es Effekte gibt
+    const cueId = cueSelect ? cueSelect.value : null;
+    if (cueId) {
+      const cue = state.library.find(c => c.id === cueId);
+      if (cue && cue.actions.some(a => a.mode === 'effect')) {
+        animLoop();
+      }
+    }
+  }
+
+  function stopPreviewAnimation() {
+    runtime.previewAnimating = false;
+    if (runtime.previewAnimationFrame) {
+      cancelAnimationFrame(runtime.previewAnimationFrame);
+      runtime.previewAnimationFrame = null;
+    }
+  }
+
+  // Overlay-Fenster (Pop-Out-Vorschau)
+  function openPreviewPopout() {
+    if (runtime.previewPopoutWindow && !runtime.previewPopoutWindow.closed) {
+      runtime.previewPopoutWindow.focus();
+      return;
+    }
+
+    const popout = window.open('', 'CubePreview', 'width=900,height=400,menubar=no,toolbar=no,status=no');
+    if (!popout) {
+      toast('Pop-Out-Fenster blockiert — bitte Pop-Ups erlauben', 'error');
+      return;
+    }
+
+    runtime.previewPopoutWindow = popout;
+
+    popout.document.write(`
+      <!DOCTYPE html>
+      <html lang="de">
+      <head>
+        <meta charset="UTF-8">
+        <title>ARS-Light — Vorschau</title>
+        <style>
+          body { margin: 0; padding: 16px; background: #0a0a0a; color: #f0f0f0; font-family: -apple-system, sans-serif; }
+          h3 { margin: 0 0 12px; color: #58a6ff; font-size: 16px; }
+          #popout-canvas { width: 100%; }
+          .controls { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; }
+          select { background: #1f1f1f; border: 1px solid #30363d; color: #f0f0f0; padding: 6px; border-radius: 4px; }
+          .info { color: #606060; font-size: 12px; margin-top: 8px; }
+        </style>
+      </head>
+      <body>
+        <h3>ARS-Light — Live-Vorschau</h3>
+        <div class="controls">
+          <select id="popout-cue"></select>
+        </div>
+        <div id="popout-canvas"></div>
+        <div class="info">Aktualisiert sich automatisch bei Cue-Wechsel</div>
+      </body>
+      </html>
+    `);
+
+    // Cue-Liste befüllen
+    const popCueSelect = popout.document.getElementById('popout-cue');
+    state.library.forEach(cue => {
+      const opt = popout.document.createElement('option');
+      opt.value = cue.id;
+      opt.textContent = cue.name;
+      popCueSelect.appendChild(opt);
+    });
+
+    // Animation im Pop-Out-Fenster
+    let popAnimating = true;
+    function popAnimLoop() {
+      if (!popAnimating || popout.closed) return;
+      const cueId = popCueSelect.value;
+      const canvas = popout.document.getElementById('popout-canvas');
+      if (canvas && cueId) {
+        runtime.previewAnimating = true;
+        canvas.innerHTML = renderPreviewSVG(cueId);
+      }
+      popout.requestAnimationFrame(popAnimLoop);
+    }
+    popAnimLoop();
+
+    popCueSelect.addEventListener('change', () => {
+      // sofort aktualisieren
+    });
+
+    popout.addEventListener('beforeunload', () => {
+      popAnimating = false;
+      runtime.previewPopoutWindow = null;
+    });
+
+    toast('Vorschau-Fenster geöffnet', 'success');
   }
 
   function renderSettingsTab() {
