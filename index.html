@@ -4071,16 +4071,9 @@ hr {
         <span class="quick-btn-shortcut">${modeLabel ? modeLabel + ' · ' : ''}${i === 10 ? '0' : i}</span>
       `;
 
-      if (mode === 'hold') {
-        // Halten: aktiv solange gedrückt, loslassen → zurück zum Playlist-Cue
-        btn.addEventListener('pointerdown', () => fireQuickButton(i, true));
-        btn.addEventListener('pointerup', () => releaseQuickButton(i));
-        btn.addEventListener('pointerleave', () => releaseQuickButton(i));
-      } else if (mode === 'toggle') {
-        btn.addEventListener('click', () => toggleQuickButton(i));
-      } else {
-        btn.addEventListener('click', () => dispatchQuickButton(i));
-      }
+      // Einheitlich: alle Quick-Buttons nutzen click → dispatchQuickButton
+      // Der Mode wird erst beim Klick geprüft (nicht beim Rendern)
+      btn.addEventListener('click', () => dispatchQuickButton(i));
       bar.appendChild(btn);
     }
   }
@@ -4186,13 +4179,10 @@ hr {
     if (!qb || !qb.libraryId) return;
     const mode = qb.mode || 'tap';
 
-    console.log(`Quick-Button ${slot}: mode=${mode}, qb=`, JSON.stringify(qb));
-
     if (mode === 'toggle') {
       toggleQuickButton(slot);
-    } else if (mode === 'hold') {
-      fireQuickButton(slot, false);
     } else {
+      // Tap und Hold (bei Hold als Klick = einmaliges Feuern)
       fireQuickButton(slot, false);
     }
   }
