@@ -3903,11 +3903,13 @@ hr {
     if (prevBtn) prevBtn.addEventListener('click', goPrev);
     if (editBtn) editBtn.addEventListener('click', openLiveEdit);
 
-    // Tap on current card (not on buttons) = refresh/refire
+    // Tap irgendwo auf die aktuelle Cue-Karte = GO (feuern + weiter)
+    // Standard-Verhalten wie bei QLab: ein Tap = ein Cue weiter
     if (card) {
       card.addEventListener('click', (e) => {
-        if (e.target.closest('.current-actions')) return;
-        refireCurrent();
+        // Nur wenn nicht auf Prev oder Live-Edit geklickt
+        if (e.target.closest('#current-prev-btn') || e.target.closest('#current-edit-btn')) return;
+        goNext();
       });
     }
   }
