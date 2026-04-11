@@ -4219,11 +4219,18 @@ hr {
   async function toggleQuickButton(slot) {
     if (!runtime.quickButtonActive) runtime.quickButtonActive = {};
     if (runtime.quickButtonActive[slot]) {
-      // Toggle OFF → zurück zum Playlist-Cue
+      // Toggle OFF → explizit alle Cubes ausschalten
       runtime.quickButtonActive[slot] = false;
       const btn = document.querySelector(`.quick-btn[data-slot="${slot}"]`);
       if (btn) btn.classList.remove('quick-active');
-      // Playlist-Cue refiren wenn vorhanden
+
+      // Expliziter Blackout an alle Cubes (zuverlässiger als Playlist-Cue refire)
+      const offPromises = state.cubes.map(cube =>
+        sendToCube(cube, { on: true, bri: 255, seg: [{ id: 0, on: true, fx: 0, col: [[0, 0, 0, 0]], bri: 0 }] })
+      );
+      await Promise.all(offPromises);
+
+      // Dann Playlist-Cue refiren wenn vorhanden (stellt den Ausgangszustand wieder her)
       if (runtime.playlistPointer >= 0) {
         const entry = state.playlist[runtime.playlistPointer];
         if (entry) {
@@ -4231,9 +4238,11 @@ hr {
           if (cue) await fireCue(cue);
         }
       }
+      toast('Quick-Button aus', '');
     } else {
       // Toggle ON
       await fireQuickButton(slot, true);
+      toast('Quick-Button an', 'success');
     }
   }
 
