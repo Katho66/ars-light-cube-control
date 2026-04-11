@@ -2023,9 +2023,18 @@ hr {
   <!-- ==================================================================== -->
   <div class="modal" id="cue-editor-modal" hidden>
     <div class="modal-content modal-large">
-      <header class="modal-header">
-        <h3 id="cue-editor-title">Cue bearbeiten</h3>
-        <button class="modal-close" id="cue-editor-close" type="button" aria-label="Schließen">✕</button>
+      <header class="modal-header" style="flex-direction:column;gap:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;width:100%">
+          <h3 id="cue-editor-title">Cue bearbeiten</h3>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="btn btn-secondary" id="cue-test-all-btn" type="button" style="font-size:12px">🔥 Alle testen</button>
+            <button class="btn btn-secondary" id="cue-test-off-btn" type="button" style="font-size:12px">⬛ Aus</button>
+            <button class="modal-close" id="cue-editor-close" type="button" aria-label="Schließen">✕</button>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--text-secondary);width:100%">
+          🎨 Farbe wählbar · ⏩ Speed · 💡 Intensität · 🎭 Palette
+        </div>
       </header>
       <div class="modal-body">
         <div class="form-row">
@@ -2041,15 +2050,7 @@ hr {
           <input type="number" id="cue-editor-fade" min="0" max="10000" step="50">
         </div>
         <hr>
-        <div style="background:var(--bg-tertiary);border:1px solid var(--border-default);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:var(--text-secondary)">
-          <strong style="color:var(--text-primary)">Effekt-Symbole:</strong>
-          🎨 Farbe wählbar &nbsp;·&nbsp; ⏩ Speed-Regler &nbsp;·&nbsp; 💡 Intensität-Regler &nbsp;·&nbsp; 🎭 Palette-basiert
-        </div>
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
-          <h4 style="margin:0">Aktionen pro Cube</h4>
-          <button class="btn btn-secondary" id="cue-test-all-btn" type="button" style="font-size:12px">🔥 Alle testen</button>
-          <button class="btn btn-secondary" id="cue-test-off-btn" type="button" style="font-size:12px">⬛ Alle aus</button>
-        </div>
+        <h4>Aktionen pro Cube</h4>
         <div id="cue-editor-actions">
           <!-- Cube-Aktionen dynamisch -->
         </div>
