@@ -3417,31 +3417,30 @@ hr {
       list.appendChild(row);
     }
 
-    list.querySelectorAll('.quick-cue-select').forEach(sel => {
-      sel.addEventListener('change', () => {
-        const slot = parseInt(sel.dataset.slot, 10);
-        updateQuickButton(slot, { libraryId: sel.value || null });
-      });
+    // Event-Delegation: ein Listener auf dem Container für alle Quick-Config-Elemente
+    list.addEventListener('change', (e) => {
+      const target = e.target;
+      const slot = parseInt(target.dataset.slot, 10);
+      if (!slot) return;
+
+      if (target.classList.contains('quick-cue-select')) {
+        updateQuickButton(slot, { libraryId: target.value || null });
+      } else if (target.classList.contains('quick-color-input')) {
+        updateQuickButton(slot, { color: target.value });
+      } else if (target.classList.contains('quick-mode-select')) {
+        updateQuickButton(slot, { mode: target.value });
+        saveState(true);
+        toast(`Slot ${slot}: Modus → ${target.value}`, 'success');
+      }
     });
-    list.querySelectorAll('.quick-label-input').forEach(inp => {
-      inp.addEventListener('input', () => {
-        const slot = parseInt(inp.dataset.slot, 10);
-        updateQuickButton(slot, { label: inp.value });
-      });
-    });
-    list.querySelectorAll('.quick-color-input').forEach(inp => {
-      inp.addEventListener('input', () => {
-        const slot = parseInt(inp.dataset.slot, 10);
-        updateQuickButton(slot, { color: inp.value });
-      });
-    });
-    list.querySelectorAll('.quick-mode-select').forEach(sel => {
-      sel.addEventListener('change', () => {
-        const slot = parseInt(sel.dataset.slot, 10);
-        updateQuickButton(slot, { mode: sel.value });
-        saveState(true); // Sofort speichern, nicht debounced
-        toast(`Slot ${slot}: Modus → ${sel.value}`, 'success');
-      });
+    list.addEventListener('input', (e) => {
+      const target = e.target;
+      const slot = parseInt(target.dataset.slot, 10);
+      if (!slot) return;
+
+      if (target.classList.contains('quick-label-input')) {
+        updateQuickButton(slot, { label: target.value });
+      }
     });
     list.querySelectorAll('.test-quick-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
