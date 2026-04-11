@@ -1977,7 +1977,7 @@ hr {
 
       <!-- Mittlere Spalte: Aktuell -->
       <section class="cue-column current-column" id="current-column">
-        <h3 class="column-title">◆ Aktuell ◆</h3>
+        <h3 class="column-title">◆ Aktiv ◆</h3>
         <div class="current-cue-card" id="current-cue-card">
           <!-- Aktueller Cue -->
         </div>
@@ -2678,7 +2678,7 @@ hr {
   let runtime = {
     mode: 'edit', // 'edit' | 'show'
     activeTab: 'cubes',
-    playlistPointer: 0,
+    playlistPointer: -1,  // -1 = "Bereit", erster GO geht auf 0
     showStartTime: null,
     cueStartTime: null,
     showTimerInterval: null,
@@ -3771,19 +3771,37 @@ hr {
 
     const ptr = runtime.playlistPointer;
 
-    // Past entries
+    // Zustand "Bereit" (ptr === -1): Noch kein Cue gefeuert
+    if (ptr < 0) {
+      current.innerHTML = `
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:16px;padding:24px">
+          <div style="font-size:clamp(18px,4vh,32px);font-weight:700;color:var(--accent-info)">${escapeHtml(state.show.name)}</div>
+          <div style="font-size:clamp(14px,2vh,18px);color:var(--text-secondary)">Bereit — GO drücken zum Starten</div>
+          <div style="font-size:clamp(12px,1.5vh,14px);color:var(--text-muted)">${state.playlist.length} Cues in der Playlist</div>
+          <button class="btn btn-go" id="current-go-btn" style="margin-top:16px">GO ▶</button>
+        </div>
+      `;
+      document.getElementById('current-go-btn').addEventListener('click', goNext);
+      // Alle Cues sind "folgend"
+      for (let i = 0; i < state.playlist.length; i++) {
+        next.appendChild(renderSideCueCard(state.playlist[i], i, false));
+      }
+      return;
+    }
+
+    // Past entries (alle vor dem aktuellen Pointer)
     for (let i = 0; i < ptr; i++) {
       past.appendChild(renderSideCueCard(state.playlist[i], i, true));
     }
 
-    // Current entry
+    // Current entry = der AKTIVE (zuletzt gefeuerte) Cue
     const currentEntry = state.playlist[ptr];
     if (currentEntry) {
       current.innerHTML = renderCurrentCueCard(currentEntry, ptr);
       wireCurrentCueCardEvents();
     }
 
-    // Next entries
+    // Next entries (alle nach dem aktuellen Pointer)
     for (let i = ptr + 1; i < state.playlist.length; i++) {
       next.appendChild(renderSideCueCard(state.playlist[i], i, false));
     }
@@ -3819,14 +3837,8 @@ hr {
 
     const detail = describeActions(cue);
 
-    // "Zuletzt gefeuert" Anzeige
-    const lastFired = runtime.lastFiredCueName
-      ? `<div style="font-size:12px;color:var(--accent-go);margin-bottom:8px;font-weight:600">✓ Zuletzt: ${escapeHtml(runtime.lastFiredCueName)} (${String(runtime.lastFiredPosition).padStart(2,'0')})</div>`
-      : '';
-
     return `
-      ${lastFired}
-      <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">Nächster Cue:</div>
+      <div style="font-size:11px;color:var(--accent-go);margin-bottom:4px;font-weight:600">▶ Aktiv</div>
       <div class="current-position">${String(idx + 1).padStart(2, '0')}</div>
       <div class="current-name">${escapeHtml(cue.name)}</div>
       <div class="current-cube-grid">
@@ -3959,6 +3971,16 @@ hr {
     setTimeout(() => { _goNextLock = false; }, 300); // 300ms Sperre
 
     if (state.playlist.length === 0) return;
+
+    // Pointer ZUERST weiterbewegen, DANN feuern
+    // Pointer startet bei -1 ("Bereit"), erster GO geht auf 0
+    if (runtime.playlistPointer < state.playlist.length - 1) {
+      runtime.playlistPointer++;
+    } else {
+      toast('Ende der Playlist erreicht', 'warning');
+      return;
+    }
+
     const entry = state.playlist[runtime.playlistPointer];
     const cue = state.library.find(c => c.id === entry.libraryId);
     if (!cue) {
@@ -3979,21 +4001,22 @@ hr {
     // Bestätigung anzeigen
     toast(`✓ ${cue.name}`, 'success');
 
-    // "Zuletzt gefeuert" merken für Anzeige
-    runtime.lastFiredCueName = cue.name;
-    runtime.lastFiredPosition = runtime.playlistPointer + 1;
-
-    // Pointer weiterbewegen (wenn nicht am Ende)
-    if (runtime.playlistPointer < state.playlist.length - 1) {
-      runtime.playlistPointer++;
-    }
+    // Mitte zeigt jetzt den AKTIVEN (gerade gefeuerten) Cue
     renderShowColumns();
     renderShowPreview();
   }
 
-  function goPrev() {
+  async function goPrev() {
     if (runtime.playlistPointer > 0) {
       runtime.playlistPointer--;
+      const entry = state.playlist[runtime.playlistPointer];
+      const cue = state.library.find(c => c.id === entry.libraryId);
+      if (cue) await fireCue(cue); // Vorherigen Cue auch feuern
+      renderShowColumns();
+      renderShowPreview();
+    } else if (runtime.playlistPointer === 0) {
+      // Zurück zum "Bereit"-Zustand
+      runtime.playlistPointer = -1;
       renderShowColumns();
       renderShowPreview();
     }
@@ -4950,6 +4973,7 @@ hr {
     }
     runtime.showStartTime = null;
     runtime.cueStartTime = null;
+    runtime.playlistPointer = -1; // Show zurücksetzen auf "Bereit"
   }
 
   // ==========================================================================
