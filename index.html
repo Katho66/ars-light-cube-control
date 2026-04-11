@@ -1312,6 +1312,31 @@ hr {
   font-size: var(--text-sm);
 }
 
+.value-input {
+  width: 65px;
+  text-align: right;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2);
+  min-height: 32px;
+  -moz-appearance: textfield;
+}
+
+.value-input::-webkit-inner-spin-button,
+.value-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.value-input:focus {
+  outline: none;
+  border-color: var(--accent-info);
+}
+
 /* Cue editor cube action sections */
 
 .cube-action-section {
@@ -2034,7 +2059,7 @@ hr {
         <div class="form-row">
           <label>Master-Helligkeit</label>
           <input type="range" id="live-master-brightness" min="0" max="100" step="1">
-          <span class="value-display" id="live-master-brightness-value">100%</span>
+          <input type="number" min="0" max="100" id="live-master-brightness-input" class="value-input" value="100"><span class="unit">%</span>
         </div>
         <hr>
         <div id="live-cube-list">
@@ -4081,6 +4106,29 @@ hr {
     modal.dataset.editingId = cueId || '';
 
     document.getElementById('cue-editor-save').onclick = () => saveCueEditor(cueId);
+
+    // Massenaktion: Werte von Cube 1 auf alle übernehmen
+    document.getElementById('bulk-copy-cube1-all').onclick = () => {
+      const sourceCube = state.cubes[0]; // Cube 1
+      if (!sourceCube) return;
+      const sourceActions = cue.actions.filter(a => a.cubeId === sourceCube.id);
+      state.cubes.forEach(targetCube => {
+        if (targetCube.id === sourceCube.id) return; // Nicht auf sich selbst kopieren
+        sourceActions.forEach(srcAction => {
+          let targetAction = cue.actions.find(a => a.cubeId === targetCube.id && a.stripId === srcAction.stripId);
+          if (!targetAction) {
+            targetAction = { cubeId: targetCube.id, stripId: srcAction.stripId, mode: 'off' };
+            cue.actions.push(targetAction);
+          }
+          // Werte kopieren, aber cubeId beibehalten
+          const copied = JSON.parse(JSON.stringify(srcAction));
+          copied.cubeId = targetCube.id;
+          Object.assign(targetAction, copied);
+        });
+      });
+      renderCueEditorActions(cue);
+      toast('Werte von Cube 1 auf alle übernommen', 'success');
+    };
   }
 
   function makeNewCue() {
@@ -4201,14 +4249,14 @@ hr {
         <div class="form-row">
           <label>Helligkeit</label>
           <input type="range" min="0" max="100" step="1" value="${brightness}" class="strip-brightness">
-          <span class="value-display">${brightness}%</span>
+          <input type="number" min="0" max="100" class="value-input strip-brightness-input" value="${brightness}"><span class="unit">%</span>
         </div>
         <div class="form-row mode-custom-controls" ${action.mode === 'custom' ? '' : 'hidden'}>
           <label>Farbe</label>
           <input type="color" value="${rgbwHex}" class="strip-color">
           <label style="margin-left:12px">W</label>
           <input type="range" min="0" max="255" step="1" value="${action.rgbw ? action.rgbw[3] : 0}" class="strip-white" style="max-width:120px">
-          <span class="value-display strip-white-value">${action.rgbw ? action.rgbw[3] : 0}</span>
+          <input type="number" min="0" max="255" class="value-input strip-white-input" value="${action.rgbw ? action.rgbw[3] : 0}">
         </div>
         <div class="form-row mode-preset-controls" ${action.mode === 'preset' ? '' : 'hidden'}>
           <label>Preset</label>
@@ -4229,12 +4277,12 @@ hr {
           <div class="form-row">
             <label>Speed</label>
             <input type="range" min="0" max="255" step="1" value="${action.speed != null ? action.speed : 128}" class="strip-effect-speed">
-            <span class="value-display">${action.speed != null ? action.speed : 128}</span>
+            <input type="number" min="0" max="255" class="value-input strip-effect-speed-input" value="${action.speed != null ? action.speed : 128}">
           </div>
           <div class="form-row">
             <label>Intensität</label>
             <input type="range" min="0" max="255" step="1" value="${action.intensity != null ? action.intensity : 128}" class="strip-effect-intensity">
-            <span class="value-display">${action.intensity != null ? action.intensity : 128}</span>
+            <input type="number" min="0" max="255" class="value-input strip-effect-intensity-input" value="${action.intensity != null ? action.intensity : 128}">
           </div>
           <div class="form-row">
             <label>Basisfarbe</label>
@@ -4275,11 +4323,17 @@ hr {
     });
 
     const briSlider = container.querySelector('.strip-brightness');
-    const briDisplay = briSlider.nextElementSibling;
+    const briInput = container.querySelector('.strip-brightness-input');
     briSlider.addEventListener('input', () => {
       action.brightness = parseInt(briSlider.value, 10);
-      briDisplay.textContent = `${action.brightness}%`;
+      if (briInput) briInput.value = action.brightness;
     });
+    if (briInput) {
+      briInput.addEventListener('input', () => {
+        action.brightness = Math.max(0, Math.min(100, parseInt(briInput.value, 10) || 0));
+        briSlider.value = action.brightness;
+      });
+    }
 
     const colorPicker = container.querySelector('.strip-color');
     if (colorPicker) {
@@ -4289,12 +4343,19 @@ hr {
     }
 
     const whiteSlider = container.querySelector('.strip-white');
+    const whiteInput = container.querySelector('.strip-white-input');
     if (whiteSlider) {
-      const whiteDisplay = container.querySelector('.strip-white-value');
       whiteSlider.addEventListener('input', () => {
         const w = parseInt(whiteSlider.value, 10);
         if (action.rgbw) action.rgbw[3] = w;
-        if (whiteDisplay) whiteDisplay.textContent = w;
+        if (whiteInput) whiteInput.value = w;
+      });
+    }
+    if (whiteInput) {
+      whiteInput.addEventListener('input', () => {
+        const w = Math.max(0, Math.min(255, parseInt(whiteInput.value, 10) || 0));
+        if (action.rgbw) action.rgbw[3] = w;
+        if (whiteSlider) whiteSlider.value = w;
       });
     }
 
@@ -4331,18 +4392,32 @@ hr {
     }
 
     const speedSlider = container.querySelector('.strip-effect-speed');
+    const speedInput = container.querySelector('.strip-effect-speed-input');
     if (speedSlider) {
       speedSlider.addEventListener('input', () => {
         action.speed = parseInt(speedSlider.value, 10);
-        speedSlider.nextElementSibling.textContent = action.speed;
+        if (speedInput) speedInput.value = action.speed;
+      });
+    }
+    if (speedInput) {
+      speedInput.addEventListener('input', () => {
+        action.speed = Math.max(0, Math.min(255, parseInt(speedInput.value, 10) || 0));
+        if (speedSlider) speedSlider.value = action.speed;
       });
     }
 
     const intensitySlider = container.querySelector('.strip-effect-intensity');
+    const intensityInput = container.querySelector('.strip-effect-intensity-input');
     if (intensitySlider) {
       intensitySlider.addEventListener('input', () => {
         action.intensity = parseInt(intensitySlider.value, 10);
-        intensitySlider.nextElementSibling.textContent = action.intensity;
+        if (intensityInput) intensityInput.value = action.intensity;
+      });
+    }
+    if (intensityInput) {
+      intensityInput.addEventListener('input', () => {
+        action.intensity = Math.max(0, Math.min(255, parseInt(intensityInput.value, 10) || 0));
+        if (intensitySlider) intensitySlider.value = action.intensity;
       });
     }
 
@@ -4583,10 +4658,18 @@ hr {
 
     // Wire master brightness
     const masterSlider = document.getElementById('live-master-brightness');
+    const masterInput = document.getElementById('live-master-brightness-input');
     masterSlider.oninput = () => {
-      document.getElementById('live-master-brightness-value').textContent = `${masterSlider.value}%`;
+      if (masterInput) masterInput.value = masterSlider.value;
       debouncedLivePreview('master', () => fireCue(cue, 100));
     };
+    if (masterInput) {
+      masterInput.oninput = () => {
+        const val = Math.max(0, Math.min(100, parseInt(masterInput.value, 10) || 0));
+        masterSlider.value = val;
+        debouncedLivePreview('master', () => fireCue(cue, 100));
+      };
+    }
   }
 
   function renderLiveEditCubeList(cue) {
@@ -4614,7 +4697,8 @@ hr {
                 <label>Strip ${strip.id} Helligkeit</label>
                 <input type="range" min="0" max="100" step="1" value="${bri}"
                        data-cube="${cube.id}" data-strip="${strip.id}" class="live-strip-brightness">
-                <span class="value-display">${bri}%</span>
+                <input type="number" min="0" max="100" value="${bri}" class="value-input live-strip-brightness-input"
+                       data-cube="${cube.id}" data-strip="${strip.id}"><span class="unit">%</span>
               </div>
               ${action.mode === 'custom' && action.rgbw ? `
                 <div class="form-row">
@@ -4632,6 +4716,7 @@ hr {
 
     // Wire live preview
     container.querySelectorAll('.live-strip-brightness').forEach(slider => {
+      const briInput = container.querySelector(`.live-strip-brightness-input[data-cube="${slider.dataset.cube}"][data-strip="${slider.dataset.strip}"]`);
       slider.addEventListener('input', () => {
         const cubeId = parseInt(slider.dataset.cube, 10);
         const stripId = parseInt(slider.dataset.strip, 10);
@@ -4639,7 +4724,7 @@ hr {
         const action = cue.actions.find(a => a.cubeId === cubeId && a.stripId === stripId);
         if (action) {
           action.brightness = parseInt(slider.value, 10);
-          slider.nextElementSibling.textContent = `${action.brightness}%`;
+          if (briInput) briInput.value = action.brightness;
           debouncedLivePreview(`${cubeId}-${stripId}`, () => {
             const cube = state.cubes.find(c => c.id === cubeId);
             const body = buildCubeStateBody(cube, [action], 100);
@@ -4647,6 +4732,23 @@ hr {
           });
         }
       });
+      if (briInput) {
+        briInput.addEventListener('input', () => {
+          const cubeId = parseInt(slider.dataset.cube, 10);
+          const stripId = parseInt(slider.dataset.strip, 10);
+          const cue = state.library.find(c => c.id === runtime.liveEditCueId);
+          const action = cue.actions.find(a => a.cubeId === cubeId && a.stripId === stripId);
+          if (action) {
+            action.brightness = Math.max(0, Math.min(100, parseInt(briInput.value, 10) || 0));
+            slider.value = action.brightness;
+            debouncedLivePreview(`${cubeId}-${stripId}`, () => {
+              const cube = state.cubes.find(c => c.id === cubeId);
+              const body = buildCubeStateBody(cube, [action], 100);
+              sendToCube(cube, body);
+            });
+          }
+        });
+      }
     });
 
     container.querySelectorAll('.live-strip-color').forEach(picker => {
