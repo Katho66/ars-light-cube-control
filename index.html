@@ -4078,9 +4078,20 @@ hr {
         <span class="quick-btn-shortcut">${modeLabel ? modeLabel + ' · ' : ''}${i === 10 ? '0' : i}</span>
       `;
 
-      // Einheitlich: alle Quick-Buttons nutzen click → dispatchQuickButton
-      // Der Mode wird erst beim Klick geprüft (nicht beim Rendern)
-      btn.addEventListener('click', () => dispatchQuickButton(i));
+      if (mode === 'hold') {
+        // Hold: Finger runter = an, Finger hoch = aus
+        btn.addEventListener('pointerdown', (e) => {
+          e.preventDefault();
+          fireQuickButton(i, true);
+          toast('Hold: an', 'success');
+        });
+        btn.addEventListener('pointerup', () => releaseQuickButton(i));
+        btn.addEventListener('pointerleave', () => releaseQuickButton(i));
+        btn.addEventListener('pointercancel', () => releaseQuickButton(i));
+      } else {
+        // Tap und Toggle über dispatch
+        btn.addEventListener('click', () => dispatchQuickButton(i));
+      }
       bar.appendChild(btn);
     }
   }
@@ -4188,8 +4199,10 @@ hr {
 
     if (mode === 'toggle') {
       toggleQuickButton(slot);
+    } else if (mode === 'hold') {
+      // Hold über Keyboard: keydown = an (release kommt über keyup)
+      fireQuickButton(slot, true);
     } else {
-      // Tap und Hold (bei Hold als Klick = einmaliges Feuern)
       fireQuickButton(slot, false);
     }
   }
@@ -4248,10 +4261,17 @@ hr {
 
   async function releaseQuickButton(slot) {
     if (!runtime.quickButtonActive) runtime.quickButtonActive = {};
+    if (!runtime.quickButtonActive[slot]) return; // Schon aus, nicht nochmal feuern
     runtime.quickButtonActive[slot] = false;
     const btn = document.querySelector(`.quick-btn[data-slot="${slot}"]`);
     if (btn) btn.classList.remove('quick-active');
-    // Zurück zum Playlist-Cue
+
+    // Expliziter Blackout + Playlist-Cue restore (wie bei Toggle-OFF)
+    const offPromises = state.cubes.map(cube =>
+      sendToCube(cube, { on: true, bri: 255, seg: [{ id: 0, on: true, fx: 0, col: [[0, 0, 0, 0]], bri: 0 }] })
+    );
+    await Promise.all(offPromises);
+
     if (runtime.playlistPointer >= 0) {
       const entry = state.playlist[runtime.playlistPointer];
       if (entry) {
@@ -5561,6 +5581,18 @@ hr {
 
     // Keyboard shortcuts (show mode)
     document.addEventListener('keydown', handleKeyboard);
+    // Hold-Modus: Taste loslassen = Quick-Button release
+    document.addEventListener('keyup', (e) => {
+      if (runtime.mode !== 'show') return;
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
+      const keySlot = e.key === '0' ? 10 : (e.key >= '1' && e.key <= '9') ? parseInt(e.key, 10) : null;
+      if (keySlot) {
+        const qb = state.quickButtons.find(q => q.slot === keySlot);
+        if (qb && qb.mode === 'hold' && runtime.quickButtonActive && runtime.quickButtonActive[keySlot]) {
+          releaseQuickButton(keySlot);
+        }
+      }
+    });
 
     // Prevent leaving during active show
     window.addEventListener('beforeunload', (e) => {
