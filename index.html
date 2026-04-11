@@ -4581,6 +4581,39 @@ hr {
       });
     });
 
+    // Live-Update: bei aktiven Test-Buttons Änderungen sofort an Cubes senden
+    function editorLiveUpdate() {
+      // Prüfe ob irgendein Test-Button aktiv ist
+      const activeTests = container.querySelectorAll('.test-editor-cube-btn.test-active, .test-editor-strip-btn.test-active');
+      if (activeTests.length === 0) return;
+      // Debounced re-fire für jeden aktiven Test
+      if (runtime._editorLiveTimer) clearTimeout(runtime._editorLiveTimer);
+      runtime._editorLiveTimer = setTimeout(() => {
+        activeTests.forEach(async btn => {
+          if (btn.classList.contains('test-editor-cube-btn')) {
+            const cubeId = parseInt(btn.dataset.cubeId, 10);
+            const cube = state.cubes.find(c => c.id === cubeId);
+            if (cube) {
+              const cubeActions = cue.actions.filter(a => a.cubeId === cubeId);
+              await sendToCube(cube, buildCubeStateBody(cube, cubeActions, 0));
+            }
+          } else if (btn.classList.contains('test-editor-strip-btn')) {
+            const cubeId = parseInt(btn.dataset.cube, 10);
+            const stripId = parseInt(btn.dataset.strip, 10);
+            const cube = state.cubes.find(c => c.id === cubeId);
+            const action = cue.actions.find(a => a.cubeId === cubeId && a.stripId === stripId);
+            if (cube && action) {
+              await sendToCube(cube, buildCubeStateBody(cube, [action], 0));
+            }
+          }
+        });
+      }, 200);
+    }
+
+    // Alle Inputs im Editor überwachen für Live-Update
+    container.addEventListener('input', editorLiveUpdate);
+    container.addEventListener('change', editorLiveUpdate);
+
     // Pro-Strip Test-Buttons (Toggle)
     container.querySelectorAll('.test-editor-strip-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
