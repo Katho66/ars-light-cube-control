@@ -4078,7 +4078,7 @@ hr {
       } else if (mode === 'toggle') {
         btn.addEventListener('click', () => toggleQuickButton(i));
       } else {
-        btn.addEventListener('click', () => fireQuickButton(i, false));
+        btn.addEventListener('click', () => dispatchQuickButton(i));
       }
       bar.appendChild(btn);
     }
@@ -4177,6 +4177,23 @@ hr {
 
     renderShowColumns();
     renderShowPreview();
+  }
+
+  // Zentrale Quick-Button-Dispatch: prüft den Mode und leitet richtig weiter
+  function dispatchQuickButton(slot) {
+    const qb = state.quickButtons.find(q => q.slot === slot);
+    if (!qb || !qb.libraryId) return;
+    const mode = qb.mode || 'tap';
+
+    if (mode === 'toggle') {
+      toggleQuickButton(slot);
+    } else if (mode === 'hold') {
+      // Hold wird über pointerdown/pointerup gesteuert, nicht über dispatch
+      // Falls trotzdem hier aufgerufen (Keyboard): als Tap behandeln
+      fireQuickButton(slot, false);
+    } else {
+      fireQuickButton(slot, false);
+    }
   }
 
   async function fireQuickButton(slot, setActive) {
@@ -5589,7 +5606,7 @@ hr {
       case '9':
         e.preventDefault();
         const slot = e.key === '0' ? 10 : parseInt(e.key, 10);
-        fireQuickButton(slot);
+        dispatchQuickButton(slot);
         break;
       case '?':
         e.preventDefault();
