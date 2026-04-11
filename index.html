@@ -2014,6 +2014,7 @@ hr {
       </div>
       <footer class="modal-footer">
         <button class="btn btn-secondary" id="cue-editor-cancel" type="button">Abbrechen</button>
+        <button class="btn btn-secondary" id="cue-editor-save-as" type="button">Speichern als…</button>
         <button class="btn btn-primary" id="cue-editor-save" type="button">Speichern</button>
       </footer>
     </div>
@@ -3168,6 +3169,7 @@ hr {
           <input type="text" value="${escapeHtml(entry.note || '')}" placeholder="Notiz..." data-idx="${idx}">
         </div>
         <div class="playlist-actions">
+          <button class="btn btn-icon edit-pl-cue-btn" data-library-id="${entry.libraryId}" title="In Bibliothek bearbeiten">✏️</button>
           <button class="btn btn-icon move-up-btn" data-idx="${idx}" ${idx === 0 ? 'disabled' : ''} title="Hoch">▲</button>
           <button class="btn btn-icon move-dn-btn" data-idx="${idx}" ${idx === state.playlist.length - 1 ? 'disabled' : ''} title="Runter">▼</button>
           <button class="btn btn-icon remove-pl-btn" data-idx="${idx}" title="Entfernen">🗑</button>
@@ -3185,6 +3187,15 @@ hr {
     list.appendChild(insertEnd);
 
     // Wire up
+    list.querySelectorAll('.edit-pl-cue-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const libId = btn.dataset.libraryId;
+        // Zur Bibliothek wechseln und Cue-Editor öffnen
+        runtime.activeTab = 'library';
+        renderEditTab();
+        setTimeout(() => openCueEditor(libId), 100);
+      });
+    });
     list.querySelectorAll('.move-up-btn').forEach(btn => {
       btn.addEventListener('click', () => movePlaylistEntry(parseInt(btn.dataset.idx, 10), -1));
     });
@@ -4048,6 +4059,12 @@ hr {
         <div class="cube-action-header">
           <input type="checkbox" id="cube-active-${cube.id}" ${cubeActive ? 'checked' : ''}>
           <label for="cube-active-${cube.id}">Cube ${cube.id} ${cube.name ? '— ' + escapeHtml(cube.name) : ''}</label>
+          <select class="copy-from-cube-select" data-target-cube="${cube.id}" style="margin-left:auto;background:var(--bg-tertiary);border:1px solid var(--border-default);color:var(--text-secondary);padding:4px 8px;border-radius:4px;font-size:12px">
+            <option value="">Werte übernehmen von…</option>
+            ${state.cubes.filter(c => c.id !== cube.id).map(c =>
+              `<option value="${c.id}">Cube ${c.id}</option>`
+            ).join('')}
+          </select>
         </div>
         <div id="cube-strips-${cube.id}" ${cubeActive ? '' : 'hidden'}>
           ${cube.strips.map(strip => renderStripEditor(cube, strip, cue)).join('')}
@@ -4081,6 +4098,27 @@ hr {
           stripsDiv.hidden = true;
           cue.actions.filter(a => a.cubeId === cube.id).forEach(a => { a.mode = 'off'; });
         }
+      });
+    });
+
+    // Wire up "Werte übernehmen von" Dropdowns
+    container.querySelectorAll('.copy-from-cube-select').forEach(sel => {
+      sel.addEventListener('change', () => {
+        const targetCubeId = parseInt(sel.dataset.targetCube, 10);
+        const sourceCubeId = parseInt(sel.value, 10);
+        if (!sourceCubeId) return;
+        const sourceActions = cue.actions.filter(a => a.cubeId === sourceCubeId);
+        sourceActions.forEach(srcAction => {
+          let targetAction = cue.actions.find(a => a.cubeId === targetCubeId && a.stripId === srcAction.stripId);
+          if (!targetAction) {
+            targetAction = { cubeId: targetCubeId, stripId: srcAction.stripId, mode: 'off' };
+            cue.actions.push(targetAction);
+          }
+          Object.assign(targetAction, JSON.parse(JSON.stringify(srcAction)), { cubeId: targetCubeId });
+        });
+        sel.value = ''; // Reset Dropdown
+        renderCueEditorActions(cue);
+        toast(`Werte von Cube ${sourceCubeId} übernommen`, 'success');
       });
     });
 
@@ -4313,6 +4351,37 @@ hr {
 
   function closeCueEditor() {
     document.getElementById('cue-editor-modal').hidden = true;
+  }
+
+  function saveCueEditorAs() {
+    const modal = document.getElementById('cue-editor-modal');
+    const editingId = modal.dataset.editingId;
+    const sourceCue = editingId ? state.library.find(c => c.id === editingId) : null;
+
+    const currentName = document.getElementById('cue-editor-name').value.trim();
+    const newName = prompt('Name für den neuen Bibliotheks-Eintrag:', currentName + ' (Kopie)');
+    if (!newName) return;
+
+    if (state.library.some(c => c.name === newName)) {
+      toast(`Name '${newName}' wird bereits verwendet`, 'error');
+      return;
+    }
+
+    // Neuen Cue erstellen mit den aktuellen Editor-Werten
+    const newCue = sourceCue
+      ? JSON.parse(JSON.stringify(sourceCue))
+      : makeNewCue();
+
+    newCue.id = 'cue-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+    newCue.name = newName;
+    newCue.description = document.getElementById('cue-editor-description').value;
+    newCue.fadeTime = parseInt(document.getElementById('cue-editor-fade').value, 10) || 0;
+
+    state.library.push(newCue);
+    saveState();
+    closeCueEditor();
+    renderLibraryTab();
+    toast(`'${newName}' als neuer Eintrag gespeichert`, 'success');
   }
 
   function duplicateCue(cueId) {
@@ -4972,6 +5041,7 @@ hr {
     // Cue editor modal
     document.getElementById('cue-editor-close').addEventListener('click', closeCueEditor);
     document.getElementById('cue-editor-cancel').addEventListener('click', closeCueEditor);
+    document.getElementById('cue-editor-save-as').addEventListener('click', saveCueEditorAs);
 
     // Live edit modal
     document.getElementById('live-edit-close').addEventListener('click', closeLiveEdit);
