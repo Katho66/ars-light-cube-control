@@ -3819,7 +3819,14 @@ hr {
 
     const detail = describeActions(cue);
 
+    // "Zuletzt gefeuert" Anzeige
+    const lastFired = runtime.lastFiredCueName
+      ? `<div style="font-size:12px;color:var(--accent-go);margin-bottom:8px;font-weight:600">✓ Zuletzt: ${escapeHtml(runtime.lastFiredCueName)} (${String(runtime.lastFiredPosition).padStart(2,'0')})</div>`
+      : '';
+
     return `
+      ${lastFired}
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">Nächster Cue:</div>
       <div class="current-position">${String(idx + 1).padStart(2, '0')}</div>
       <div class="current-name">${escapeHtml(cue.name)}</div>
       <div class="current-cube-grid">
@@ -3966,9 +3973,17 @@ hr {
     runtime.cueStartTime = Date.now();
     startCueTimer();
 
+    // Cue feuern
     await fireCue(cue);
 
-    // Move pointer forward (if not at end)
+    // Bestätigung anzeigen
+    toast(`✓ ${cue.name}`, 'success');
+
+    // "Zuletzt gefeuert" merken für Anzeige
+    runtime.lastFiredCueName = cue.name;
+    runtime.lastFiredPosition = runtime.playlistPointer + 1;
+
+    // Pointer weiterbewegen (wenn nicht am Ende)
     if (runtime.playlistPointer < state.playlist.length - 1) {
       runtime.playlistPointer++;
     }
