@@ -2923,9 +2923,11 @@ hr {
 
       if (action.mode === 'off') {
         seg.on = false;
+        seg.fx = 0; // Effekt stoppen, sonst läuft ein Preset-Effekt weiter
         seg.col = [[0, 0, 0, 0]];
       } else if (action.mode === 'custom') {
         seg.on = true;
+        seg.fx = 0; // Effekt explizit auf Solid setzen — verhindert dass ein vorheriger Preset-Effekt weiterläuft
         const bri = action.brightness != null ? action.brightness : 100;
         const briScaled = masterBrightnessOverride != null
           ? Math.round((bri / 100) * (masterBrightnessOverride / 100) * 255)
@@ -3023,7 +3025,8 @@ hr {
     } else {
       showTimer.hidden = true;
       cueTimer.hidden = true;
-      cubeStatusRow.hidden = true;
+      // Cube-Status auch im Edit-Modus immer sichtbar
+      cubeStatusRow.hidden = false;
     }
 
     renderCubeStatus();
@@ -3089,6 +3092,7 @@ hr {
           <div class="cube-card-actions">
             <button class="btn btn-secondary edit-cube-btn" data-cube-id="${cube.id}" type="button">Bearbeiten</button>
             <button class="btn btn-icon test-cube-btn" data-cube-id="${cube.id}" type="button" title="Verbindung testen">⟳</button>
+            <button class="btn btn-icon fire-cube-btn" data-cube-id="${cube.id}" type="button" title="Test: Weiß an">🔥</button>
             <button class="btn btn-icon delete-cube-btn" data-cube-id="${cube.id}" type="button" title="Entfernen">🗑</button>
           </div>
         </div>
@@ -3120,6 +3124,16 @@ hr {
           toast(`${cube.name}: nicht erreichbar`, 'error');
         }
         renderCubesTab();
+      });
+    });
+    list.querySelectorAll('.fire-cube-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const cubeId = parseInt(btn.dataset.cubeId, 10);
+        const cube = state.cubes.find(c => c.id === cubeId);
+        if (cube) {
+          toast(`Test: ${cube.name} → Weiß`);
+          await sendToCube(cube, { on: true, bri: 200, seg: [{ id: 0, fx: 0, col: [[0, 0, 0, 255]] }] });
+        }
       });
     });
     list.querySelectorAll('.delete-cube-btn').forEach(btn => {
@@ -3243,6 +3257,7 @@ hr {
           <input type="text" value="${escapeHtml(entry.note || '')}" placeholder="Notiz..." data-idx="${idx}">
         </div>
         <div class="playlist-actions">
+          <button class="btn btn-icon test-pl-cue-btn" data-library-id="${entry.libraryId}" title="Test feuern">🔥</button>
           <button class="btn btn-icon edit-pl-cue-btn" data-library-id="${entry.libraryId}" title="In Bibliothek bearbeiten">✏️</button>
           <button class="btn btn-icon move-up-btn" data-idx="${idx}" ${idx === 0 ? 'disabled' : ''} title="Hoch">▲</button>
           <button class="btn btn-icon move-dn-btn" data-idx="${idx}" ${idx === state.playlist.length - 1 ? 'disabled' : ''} title="Runter">▼</button>
@@ -3261,6 +3276,15 @@ hr {
     list.appendChild(insertEnd);
 
     // Wire up
+    list.querySelectorAll('.test-pl-cue-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const cue = state.library.find(c => c.id === btn.dataset.libraryId);
+        if (cue) {
+          toast(`Test: ${cue.name}`);
+          await fireCue(cue);
+        }
+      });
+    });
     list.querySelectorAll('.edit-pl-cue-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const libId = btn.dataset.libraryId;
