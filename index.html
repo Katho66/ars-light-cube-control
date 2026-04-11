@@ -2605,6 +2605,62 @@ hr {
     { id: 18, name: 'Dissolve', category: 'Atmosphäre', desc: 'Zufälliges Füllen/Auflösen — für Übergänge' },
   ];
 
+  // Effekt-Parameter-Metadaten: welche Regler sind relevant?
+  // c=Color, s=Speed, i=Intensity, p=Palette
+  const EFFECT_PARAMS = {
+    0: 'c',        // Solid: nur Farbe
+    1: 'csi',      // Blink
+    2: 'cs',       // Breathe: Farbe + Speed
+    3: 'cs',       // Wipe
+    6: 'cs',       // Sweep
+    8: 's',        // Colorloop: nur Speed (Farben rotieren)
+    9: 'sp',       // Rainbow: Speed + Palette
+    10: 'cs',      // Scan
+    13: 'cs',      // Theater
+    17: 'si',      // Twinkle: Speed + Intensity (Anzahl)
+    20: 'csi',     // Sparkle
+    21: 'ci',      // Sparkle Dark
+    23: 'cs',      // Strobe
+    25: 'cs',      // Strobe Mega
+    28: 'csi',     // Chase
+    37: 'cs',      // Running 2
+    40: 'cs',      // Scanner
+    41: 'cs',      // Lighthouse
+    57: 'si',      // Lightning: Speed + Intensity
+    63: 'sp',      // Pride: Speed + Palette
+    65: 'sp',      // Palette: Speed + Palette
+    66: 'si',      // Fire: Speed + Intensity
+    67: 'sp',      // Colorwaves
+    68: 'sp',      // BPM
+    74: 'sip',     // Colortwinkles
+    75: 'sp',      // Lake
+    76: 'cs',      // Meteor
+    77: 'cs',      // Meteor Smooth
+    79: 'csi',     // Ripple
+    80: 'sip',     // Twinklefox: Speed+Intensity+Palette (KEINE Farbe)
+    81: 'sip',     // Twinklecat
+    83: 'csi',     // Solid Pattern
+    87: 'sp',      // Glitter
+    88: 'c',       // Candle: nur Farbe
+    91: 'csi',     // Bouncing Balls
+    97: 'sp',      // Plasma
+    98: 'ci',      // Percent
+    100: 'cs',     // Heartbeat
+    101: 'sp',     // Pacifica
+    103: 'ci',     // Solid Glitter
+    104: 'cs',     // Sunrise
+  };
+
+  function getEffectParams(effectId) {
+    const params = EFFECT_PARAMS[effectId] || 'csip'; // Default: alles zeigen
+    return {
+      hasColor: params.includes('c'),
+      hasSpeed: params.includes('s'),
+      hasIntensity: params.includes('i'),
+      hasPalette: params.includes('p'),
+    };
+  }
+
   // Effekte nach Kategorie gruppiert (für Dropdown)
   function getEffectsByCategory() {
     const groups = {};
@@ -4554,26 +4610,30 @@ hr {
             <label>Effekt</label>
             <select class="strip-effect-select">
               ${Object.entries(getEffectsByCategory()).map(([cat, effects]) =>
-                `<optgroup label="${cat}">${effects.map(e =>
-                  `<option value="${e.id}" ${(action.effectId || 0) === e.id ? 'selected' : ''}>${e.name} — ${e.desc}</option>`
-                ).join('')}</optgroup>`
+                `<optgroup label="${cat}">${effects.map(e => {
+                  const p = getEffectParams(e.id);
+                  const tags = [p.hasColor ? '🎨' : '', p.hasSpeed ? '⏩' : '', p.hasIntensity ? '💡' : '', p.hasPalette ? '🎭' : ''].filter(Boolean).join('');
+                  return `<option value="${e.id}" ${(action.effectId || 0) === e.id ? 'selected' : ''}>${e.name} — ${e.desc} ${tags}</option>`;
+                }).join('')}</optgroup>`
               ).join('')}
             </select>
           </div>
-          <div class="form-row">
+          ${(() => { const ep = getEffectParams(action.effectId || 0); return `
+          <div class="form-row" ${ep.hasSpeed ? '' : 'hidden'}>
             <label>Speed</label>
             <input type="range" min="0" max="255" step="1" value="${action.speed != null ? action.speed : 128}" class="strip-effect-speed">
             <input type="number" min="0" max="255" class="value-input strip-effect-speed-input" value="${action.speed != null ? action.speed : 128}">
           </div>
-          <div class="form-row">
+          <div class="form-row" ${ep.hasIntensity ? '' : 'hidden'}>
             <label>Intensität</label>
             <input type="range" min="0" max="255" step="1" value="${action.intensity != null ? action.intensity : 128}" class="strip-effect-intensity">
             <input type="number" min="0" max="255" class="value-input strip-effect-intensity-input" value="${action.intensity != null ? action.intensity : 128}">
           </div>
-          <div class="form-row">
+          <div class="form-row" ${ep.hasColor ? '' : 'hidden'}>
             <label>Basisfarbe</label>
             <input type="color" value="${rgbwHex}" class="strip-effect-color">
           </div>
+          `; })()}
         </div>
         ${strip.id > 0 ? `<button class="btn btn-secondary copy-strip0-btn" data-cube="${cube.id}" data-strip="${strip.id}" type="button">Werte von Strip 0 übernehmen</button>` : ''}
       </div>
@@ -4674,6 +4734,16 @@ hr {
     if (effectSelect) {
       effectSelect.addEventListener('change', () => {
         action.effectId = parseInt(effectSelect.value, 10);
+        // Controls basierend auf Effekt-Metadaten ein-/ausblenden
+        const ep = getEffectParams(action.effectId);
+        const effControls = container.querySelector('.mode-effect-controls');
+        if (effControls) {
+          const rows = effControls.querySelectorAll('.form-row');
+          // rows[0] = Effekt-Dropdown (immer sichtbar)
+          if (rows[1]) rows[1].hidden = !ep.hasSpeed;
+          if (rows[2]) rows[2].hidden = !ep.hasIntensity;
+          if (rows[3]) rows[3].hidden = !ep.hasColor;
+        }
       });
     }
 
