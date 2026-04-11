@@ -1756,6 +1756,7 @@ hr {
     </div>
 
     <div class="topbar-actions">
+      <button id="shortcuts-help-btn" class="btn btn-icon" type="button" title="Tastatur-Shortcuts" style="font-size:18px;color:var(--text-secondary)">?</button>
       <button id="mode-toggle-btn" class="mode-toggle-btn" type="button">
         <span id="mode-toggle-label">Show ▶</span>
       </button>
@@ -2112,6 +2113,54 @@ hr {
         <button class="btn btn-secondary" id="confirm-cancel" type="button">Abbrechen</button>
         <button class="btn btn-danger" id="confirm-ok" type="button">Bestätigen</button>
       </footer>
+    </div>
+  </div>
+
+  <!-- ==================================================================== -->
+  <!-- KEYBOARD SHORTCUTS HILFE                                               -->
+  <!-- ==================================================================== -->
+  <div class="modal" id="shortcuts-modal" hidden>
+    <div class="modal-content">
+      <header class="modal-header">
+        <h3>Tastatur-Shortcuts (Show-Modus)</h3>
+        <button class="modal-close" id="shortcuts-close" type="button" aria-label="Schließen">✕</button>
+      </header>
+      <div class="modal-body">
+        <table class="snapshots-table">
+          <thead>
+            <tr><th>Taste</th><th>Aktion</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><kbd>Leertaste</kbd></td><td><strong>GO</strong> — Aktuellen Cue feuern, weiterrücken</td></tr>
+            <tr><td><kbd>←</kbd> Pfeil links</td><td><strong>Prev</strong> — Eine Position zurück</td></tr>
+            <tr><td><kbd>R</kbd></td><td><strong>Refresh</strong> — Aktuellen Cue nochmal feuern</td></tr>
+            <tr><td><kbd>E</kbd></td><td><strong>Live-Edit</strong> — Edit-Modal für aktuellen Cue öffnen</td></tr>
+            <tr><td><kbd>Esc</kbd> (2× schnell)</td><td><strong>Notfall</strong> — Vollweiß auf alle Cubes</td></tr>
+            <tr><td><kbd>1</kbd> – <kbd>9</kbd></td><td><strong>Quick-Button 1–9</strong></td></tr>
+            <tr><td><kbd>0</kbd></td><td><strong>Quick-Button 10</strong></td></tr>
+            <tr><td><kbd>?</kbd></td><td>Diese Hilfe anzeigen</td></tr>
+          </tbody>
+        </table>
+        <hr>
+        <h4 style="margin-top:12px">Stream Deck</h4>
+        <p class="hint">Stream Deck-Buttons können als Keyboard-Shortcuts konfiguriert werden: "System → Hotkey" → gewünschte Taste zuweisen. Siehe STREAMDECK.md für Details.</p>
+        <hr>
+        <h4 style="margin-top:12px">Touch-Bedienung (iPad)</h4>
+        <table class="snapshots-table">
+          <thead>
+            <tr><th>Geste</th><th>Aktion</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Tap auf <strong>GO ▶</strong></td><td>Cue feuern, weiterrücken</td></tr>
+            <tr><td>Tap auf <strong>◀ Prev</strong></td><td>Eine Position zurück</td></tr>
+            <tr><td>Tap auf <strong>vergangenen/folgenden Cue</strong></td><td>Sprung-Popover öffnen</td></tr>
+            <tr><td>Tap auf <strong>aktuellen Cue</strong> (nicht auf Buttons)</td><td>Cue nochmal feuern (Refresh)</td></tr>
+            <tr><td>Tap auf <strong>✏️ Live-Edit</strong></td><td>Edit-Modal öffnen</td></tr>
+            <tr><td>Tap auf <strong>Quick-Button</strong></td><td>Quick-Cue feuern (ohne Playlist-Pointer)</td></tr>
+            <tr><td>Tap auf <strong>⚠ NOTFALL</strong> (2× schnell)</td><td>Vollweiß auf alle Cubes</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -5039,6 +5088,18 @@ hr {
     });
 
     // Cue editor modal
+    document.getElementById('shortcuts-help-btn').addEventListener('click', () => {
+      document.getElementById('shortcuts-modal').hidden = false;
+    });
+    document.getElementById('shortcuts-close').addEventListener('click', () => {
+      document.getElementById('shortcuts-modal').hidden = true;
+    });
+    document.getElementById('shortcuts-modal').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('shortcuts-modal')) {
+        document.getElementById('shortcuts-modal').hidden = true;
+      }
+    });
+
     document.getElementById('cue-editor-close').addEventListener('click', closeCueEditor);
     document.getElementById('cue-editor-cancel').addEventListener('click', closeCueEditor);
     document.getElementById('cue-editor-save-as').addEventListener('click', saveCueEditorAs);
@@ -5115,6 +5176,10 @@ hr {
         e.preventDefault();
         const slot = e.key === '0' ? 10 : parseInt(e.key, 10);
         fireQuickButton(slot);
+        break;
+      case '?':
+        e.preventDefault();
+        document.getElementById('shortcuts-modal').hidden = false;
         break;
     }
   }
