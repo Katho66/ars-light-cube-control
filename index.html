@@ -1123,6 +1123,12 @@ hr {
   animation: quick-fire 200ms ease-out;
 }
 
+.quick-btn.quick-active {
+  border-color: var(--accent-go);
+  box-shadow: 0 0 8px var(--accent-go);
+  background: var(--bg-hover);
+}
+
 @keyframes quick-fire {
   0% { background: var(--accent-go); }
   100% { background: var(--bg-tertiary); }
@@ -1772,7 +1778,7 @@ hr {
     </button>
 
     <div class="show-info">
-      <div class="show-name" id="show-name">Cube Control V1</div>
+      <div class="show-name" id="show-name" title="Klicken zum Bearbeiten" style="cursor:pointer">Cube Control V1</div>
       <div class="show-meta">
         <span class="timer" id="show-timer" hidden>Show 00:00:00</span>
         <span class="timer" id="cue-timer" hidden>Cue 00:00:00</span>
@@ -1819,6 +1825,7 @@ hr {
         <h2>Cue-Bibliothek</h2>
         <div class="tab-actions">
           <input type="search" id="library-search" placeholder="Suche..." class="search-input">
+          <button class="btn btn-secondary" id="sort-library-btn" type="button" title="Alphabetisch sortieren">A–Z</button>
           <button class="btn btn-primary" id="add-cue-btn" type="button">+ Neuer Cue</button>
         </div>
       </div>
@@ -2703,6 +2710,7 @@ hr {
     emergencyConfirmTimeout: null,
     pendingEscConfirm: false,
     escConfirmTimeout: null,
+    quickButtonActive: {},
     previewAnimating: false,
     previewAnimationFrame: null,
     previewPopoutWindow: null,
@@ -2732,6 +2740,21 @@ hr {
         }
         runtime.cubeStatus[c.id] = 'offline';
       });
+      // Migration: Fehlende Standard-Cues in die Bibliothek ergänzen
+      const requiredCues = [
+        { id: 'lib-show-start', name: '▶ Show Anfang', desc: 'Blackout — Show beginnt', fade: 0, mode: 'off' },
+        { id: 'lib-show-ende', name: '■ Show Ende', desc: 'Blackout — Show ist zu Ende', fade: 1000, mode: 'off' },
+        { id: 'lib-pause', name: '— Pause —', desc: 'Blackout für Pause zwischen den Teilen', fade: 1000, mode: 'off' },
+        { id: 'lib-blackout', name: 'Blackout', desc: 'Alle Cubes komplett aus', fade: 0, mode: 'off' },
+        { id: 'lib-notfall', name: 'NOTFALL Vollweiß', desc: 'Notfall-Sicherheits-Cue', fade: 0, mode: 'custom', rgbw: [255,255,255,255], bri: 100 },
+      ];
+      requiredCues.forEach(rc => {
+        if (!state.library.find(c => c.id === rc.id)) {
+          state.library.push(makeDefaultCue(rc.id, rc.name, rc.desc, rc.fade, rc.mode, rc.rgbw, rc.bri));
+          console.log(`Migration: Cue '${rc.name}' ergänzt`);
+        }
+      });
+
       // Migration: Bestehende Cues um fehlende Strip-1-Aktionen ergänzen
       state.library.forEach(cue => {
         state.cubes.forEach(cube => {
@@ -3176,6 +3199,8 @@ hr {
           ${usage > 0 ? `${usage}× in Playlist` : '0× ungenutzt'}
         </span>
         <div class="library-row-actions">
+          <button class="btn btn-icon lib-move-up-btn" data-id="${cue.id}" title="Hoch">▲</button>
+          <button class="btn btn-icon lib-move-dn-btn" data-id="${cue.id}" title="Runter">▼</button>
           <button class="btn btn-icon edit-cue-btn" data-id="${cue.id}" title="Bearbeiten">✏️</button>
           <button class="btn btn-icon dup-cue-btn" data-id="${cue.id}" title="Duplizieren">📋</button>
           <button class="btn btn-icon test-cue-btn" data-id="${cue.id}" title="Test feuern">🔥</button>
@@ -3185,6 +3210,26 @@ hr {
       list.appendChild(row);
     });
 
+    list.querySelectorAll('.lib-move-up-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = state.library.findIndex(c => c.id === btn.dataset.id);
+        if (idx > 0) {
+          [state.library[idx - 1], state.library[idx]] = [state.library[idx], state.library[idx - 1]];
+          saveState();
+          renderLibraryTab();
+        }
+      });
+    });
+    list.querySelectorAll('.lib-move-dn-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = state.library.findIndex(c => c.id === btn.dataset.id);
+        if (idx >= 0 && idx < state.library.length - 1) {
+          [state.library[idx], state.library[idx + 1]] = [state.library[idx + 1], state.library[idx]];
+          saveState();
+          renderLibraryTab();
+        }
+      });
+    });
     list.querySelectorAll('.edit-cue-btn').forEach(btn => {
       btn.addEventListener('click', () => openCueEditor(btn.dataset.id));
     });
@@ -3194,7 +3239,23 @@ hr {
     list.querySelectorAll('.test-cue-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
         const cue = state.library.find(c => c.id === btn.dataset.id);
-        if (cue) {
+        if (!cue) return;
+        if (btn.classList.contains('test-active')) {
+          // Toggle OFF → Blackout
+          btn.classList.remove('test-active');
+          btn.style.background = '';
+          const offCue = state.library.find(c => c.id === 'lib-blackout') || { actions: state.cubes.map(c => ({ cubeId: c.id, stripId: 0, mode: 'off' })), fadeTime: 0 };
+          await fireCue(offCue);
+          toast(`Test aus`, '');
+        } else {
+          // Toggle ON
+          // Alle anderen Test-Buttons deaktivieren
+          list.querySelectorAll('.test-cue-btn.test-active').forEach(b => {
+            b.classList.remove('test-active');
+            b.style.background = '';
+          });
+          btn.classList.add('test-active');
+          btn.style.background = 'var(--accent-go)';
           toast(`Test: ${cue.name}`);
           await fireCue(cue);
         }
@@ -3343,8 +3404,13 @@ hr {
             <option value="${cue.id}" ${slot.libraryId === cue.id ? 'selected' : ''}>${escapeHtml(cue.name)}</option>
           `).join('')}
         </select>
-        <input type="text" placeholder="Label-Override" value="${escapeHtml(slot.label || '')}" data-slot="${i}" class="quick-label-input">
+        <input type="text" placeholder="Label" value="${escapeHtml(slot.label || '')}" data-slot="${i}" class="quick-label-input">
         <input type="color" value="${slot.color || '#ffffff'}" data-slot="${i}" class="quick-color-input">
+        <select data-slot="${i}" class="quick-mode-select" style="background:var(--bg-tertiary);border:1px solid var(--border-default);color:var(--text-primary);padding:4px;border-radius:4px;font-size:12px;min-width:70px">
+          <option value="tap" ${(slot.mode || 'tap') === 'tap' ? 'selected' : ''}>Tap</option>
+          <option value="toggle" ${slot.mode === 'toggle' ? 'selected' : ''}>Toggle</option>
+          <option value="hold" ${slot.mode === 'hold' ? 'selected' : ''}>Halten</option>
+        </select>
         <button class="btn btn-icon clear-quick-btn" data-slot="${i}" title="Slot leeren">🗑</button>
       `;
       list.appendChild(row);
@@ -3366,6 +3432,12 @@ hr {
       inp.addEventListener('input', () => {
         const slot = parseInt(inp.dataset.slot, 10);
         updateQuickButton(slot, { color: inp.value });
+      });
+    });
+    list.querySelectorAll('.quick-mode-select').forEach(sel => {
+      sel.addEventListener('change', () => {
+        const slot = parseInt(sel.dataset.slot, 10);
+        updateQuickButton(slot, { mode: sel.value });
       });
     });
     list.querySelectorAll('.clear-quick-btn').forEach(btn => {
@@ -3960,16 +4032,31 @@ hr {
       const cue = state.library.find(c => c.id === qb.libraryId);
       if (!cue) continue;
 
+      const mode = qb.mode || 'tap';
+      const modeLabel = mode === 'toggle' ? 'T' : mode === 'hold' ? 'H' : '';
+      const isActive = runtime.quickButtonActive && runtime.quickButtonActive[i];
+
       const btn = document.createElement('button');
-      btn.className = 'quick-btn';
+      btn.className = `quick-btn ${isActive ? 'quick-active' : ''}`;
       btn.dataset.slot = i;
+      btn.dataset.mode = mode;
       btn.innerHTML = `
         <span class="quick-btn-color" style="background:${qb.color || '#fff'}"></span>
         <span>${escapeHtml(qb.label || cue.name)}</span>
         <div class="cube-indicators">${renderCubeIndicators(cue)}</div>
-        <span class="quick-btn-shortcut">${i === 10 ? '0' : i}</span>
+        <span class="quick-btn-shortcut">${modeLabel ? modeLabel + ' · ' : ''}${i === 10 ? '0' : i}</span>
       `;
-      btn.addEventListener('click', () => fireQuickButton(i));
+
+      if (mode === 'hold') {
+        // Halten: aktiv solange gedrückt, loslassen → zurück zum Playlist-Cue
+        btn.addEventListener('pointerdown', () => fireQuickButton(i, true));
+        btn.addEventListener('pointerup', () => releaseQuickButton(i));
+        btn.addEventListener('pointerleave', () => releaseQuickButton(i));
+      } else if (mode === 'toggle') {
+        btn.addEventListener('click', () => toggleQuickButton(i));
+      } else {
+        btn.addEventListener('click', () => fireQuickButton(i, false));
+      }
       bar.appendChild(btn);
     }
   }
@@ -4069,21 +4156,62 @@ hr {
     renderShowPreview();
   }
 
-  async function fireQuickButton(slot) {
+  async function fireQuickButton(slot, setActive) {
     const qb = state.quickButtons.find(q => q.slot === slot);
     if (!qb) return;
     const cue = state.library.find(c => c.id === qb.libraryId);
     if (!cue) return;
 
+    // Active-State tracken für Toggle/Hold
+    if (!runtime.quickButtonActive) runtime.quickButtonActive = {};
+    if (setActive) runtime.quickButtonActive[slot] = true;
+
     // Visual feedback
     const btn = document.querySelector(`.quick-btn[data-slot="${slot}"]`);
     if (btn) {
       btn.classList.add('firing');
+      if (setActive) btn.classList.add('quick-active');
       setTimeout(() => btn.classList.remove('firing'), 200);
     }
 
     await fireCue(cue);
     // Note: do NOT advance playlist pointer
+  }
+
+  async function toggleQuickButton(slot) {
+    if (!runtime.quickButtonActive) runtime.quickButtonActive = {};
+    if (runtime.quickButtonActive[slot]) {
+      // Toggle OFF → zurück zum Playlist-Cue
+      runtime.quickButtonActive[slot] = false;
+      const btn = document.querySelector(`.quick-btn[data-slot="${slot}"]`);
+      if (btn) btn.classList.remove('quick-active');
+      // Playlist-Cue refiren wenn vorhanden
+      if (runtime.playlistPointer >= 0) {
+        const entry = state.playlist[runtime.playlistPointer];
+        if (entry) {
+          const cue = state.library.find(c => c.id === entry.libraryId);
+          if (cue) await fireCue(cue);
+        }
+      }
+    } else {
+      // Toggle ON
+      await fireQuickButton(slot, true);
+    }
+  }
+
+  async function releaseQuickButton(slot) {
+    if (!runtime.quickButtonActive) runtime.quickButtonActive = {};
+    runtime.quickButtonActive[slot] = false;
+    const btn = document.querySelector(`.quick-btn[data-slot="${slot}"]`);
+    if (btn) btn.classList.remove('quick-active');
+    // Zurück zum Playlist-Cue
+    if (runtime.playlistPointer >= 0) {
+      const entry = state.playlist[runtime.playlistPointer];
+      if (entry) {
+        const cue = state.library.find(c => c.id === entry.libraryId);
+        if (cue) await fireCue(cue);
+      }
+    }
   }
 
   // ==========================================================================
@@ -5257,6 +5385,18 @@ hr {
     // Mode toggle
     document.getElementById('mode-toggle-btn').addEventListener('click', switchMode);
 
+    // Show-Name editierbar per Klick
+    document.getElementById('show-name').addEventListener('click', () => {
+      if (runtime.mode !== 'edit') return; // Nur im Edit-Modus editierbar
+      const newName = prompt('Show-Name:', state.show.name);
+      if (newName && newName.trim()) {
+        state.show.name = newName.trim();
+        saveState();
+        renderTopBar();
+        toast('Show-Name aktualisiert', 'success');
+      }
+    });
+
     // Emergency
     document.getElementById('emergency-btn').addEventListener('click', triggerEmergency);
 
@@ -5274,6 +5414,12 @@ hr {
     // Library tab
     document.getElementById('add-cue-btn').addEventListener('click', () => openCueEditor(null));
     document.getElementById('library-search').addEventListener('input', renderLibraryTab);
+    document.getElementById('sort-library-btn').addEventListener('click', () => {
+      state.library.sort((a, b) => a.name.localeCompare(b.name, 'de'));
+      saveState();
+      renderLibraryTab();
+      toast('Bibliothek alphabetisch sortiert', 'success');
+    });
 
     // Playlist tab
     document.getElementById('append-cue-btn').addEventListener('click', () => openInsertCueDropdown(state.playlist.length));
