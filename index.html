@@ -3907,8 +3907,9 @@ hr {
     // Standard-Verhalten wie bei QLab: ein Tap = ein Cue weiter
     if (card) {
       card.addEventListener('click', (e) => {
-        // Nur wenn nicht auf Prev oder Live-Edit geklickt
-        if (e.target.closest('#current-prev-btn') || e.target.closest('#current-edit-btn')) return;
+        // Nur wenn nicht auf Prev, Live-Edit oder GO-Button geklickt
+        // (GO-Button hat seinen eigenen Handler, sonst doppelt-Feuern)
+        if (e.target.closest('#current-prev-btn') || e.target.closest('#current-edit-btn') || e.target.closest('#current-go-btn')) return;
         goNext();
       });
     }
@@ -3943,7 +3944,13 @@ hr {
   // Cue triggering and playlist navigation
   // ==========================================================================
 
+  let _goNextLock = false;
   async function goNext() {
+    // Debounce: verhindert Doppel-Feuern durch Event-Bubbling oder schnelle Doppelklicks
+    if (_goNextLock) return;
+    _goNextLock = true;
+    setTimeout(() => { _goNextLock = false; }, 300); // 300ms Sperre
+
     if (state.playlist.length === 0) return;
     const entry = state.playlist[runtime.playlistPointer];
     const cue = state.library.find(c => c.id === entry.libraryId);
