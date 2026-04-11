@@ -2740,6 +2740,13 @@ hr {
         }
         runtime.cubeStatus[c.id] = 'offline';
       });
+      // Migration: Quick-Buttons ohne mode-Feld bekommen 'tap' als Default
+      if (state.quickButtons) {
+        state.quickButtons.forEach(qb => {
+          if (!qb.mode) qb.mode = 'tap';
+        });
+      }
+
       // Migration: Fehlende Standard-Cues in die Bibliothek ergänzen
       const requiredCues = [
         { id: 'lib-show-start', name: '▶ Show Anfang', desc: 'Blackout — Show beginnt', fade: 0, mode: 'off' },
