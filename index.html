@@ -1842,7 +1842,6 @@ hr {
       </div>
       <div class="playlist-footer">
         <button class="btn btn-primary" id="append-cue-btn" type="button">+ Cue anhängen</button>
-        <button class="btn btn-secondary" id="insert-pause-btn" type="button">⏸ Pause einfügen</button>
         <select id="playlist-template-select" class="search-input" style="min-width:160px">
           <option value="">Vorlage laden…</option>
           <option value="empty">Leere Show</option>
@@ -2636,9 +2635,9 @@ hr {
         makeDefaultCue('lib-warmweiss-100', 'Warmweiß 100%', 'Alle Cubes warmweiß auf voller Helligkeit', 500, 'custom', [0, 0, 0, 255], 100),
         makeDefaultCue('lib-warmweiss-50', 'Warmweiß 50%', 'Alle Cubes warmweiß auf halber Helligkeit', 500, 'custom', [0, 0, 0, 255], 50),
         makeDefaultCue('lib-notfall', 'NOTFALL Vollweiß', 'Notfall-Sicherheits-Cue: alle Cubes auf Vollweiß 100%', 0, 'custom', [255, 255, 255, 255], 100),
-        makeDefaultCue('lib-pause', '— PAUSE —', 'Blackout für Pause zwischen den Teilen', 1000, 'off'),
-        makeDefaultCue('lib-show-start', '▶ SHOW START', 'Blackout — Show beginnt', 0, 'off'),
-        makeDefaultCue('lib-show-ende', '■ SHOW ENDE', 'Blackout — Show ist zu Ende', 1000, 'off'),
+        makeDefaultCue('lib-pause', '— Pause —', 'Blackout für Pause zwischen den Teilen', 1000, 'off'),
+        makeDefaultCue('lib-show-start', '▶ Show Anfang', 'Blackout — Show beginnt', 0, 'off'),
+        makeDefaultCue('lib-show-ende', '■ Show Ende', 'Blackout — Show ist zu Ende', 1000, 'off'),
       ],
       playlist: [
         { libraryId: 'lib-show-start', note: 'Beginn' },
@@ -3251,7 +3250,7 @@ hr {
       const insertRow = document.createElement('div');
       insertRow.className = 'insert-cue-row';
       insertRow.dataset.position = idx;
-      insertRow.textContent = '+ hier einfügen';
+      insertRow.textContent = 'Cue hier einfügen';
       insertRow.addEventListener('click', () => openInsertCueDropdown(idx));
       list.appendChild(insertRow);
 
@@ -4654,9 +4653,9 @@ hr {
 
   function loadPlaylistTemplate(template) {
     // Sicherstellen dass die benötigten Cues existieren
-    ensureLibraryCue('lib-show-start', '▶ SHOW START', 'Blackout — Show beginnt', 0, 'off');
-    ensureLibraryCue('lib-show-ende', '■ SHOW ENDE', 'Blackout — Show ist zu Ende', 1000, 'off');
-    ensureLibraryCue('lib-pause', '— PAUSE —', 'Blackout für Pause zwischen den Teilen', 1000, 'off');
+    ensureLibraryCue('lib-show-start', '▶ Show Anfang', 'Blackout — Show beginnt', 0, 'off');
+    ensureLibraryCue('lib-show-ende', '■ Show Ende', 'Blackout — Show ist zu Ende', 1000, 'off');
+    ensureLibraryCue('lib-pause', '— Pause —', 'Blackout für Pause zwischen den Teilen', 1000, 'off');
 
     confirmDialog('Vorlage laden?', 'Die aktuelle Playlist wird durch die Vorlage ersetzt.', () => {
       snapshotState();
@@ -5278,18 +5277,6 @@ hr {
 
     // Playlist tab
     document.getElementById('append-cue-btn').addEventListener('click', () => openInsertCueDropdown(state.playlist.length));
-    document.getElementById('insert-pause-btn').addEventListener('click', () => {
-      // Pause ans Ende (oder an die aktuelle Position) einfügen
-      const pauseCue = state.library.find(c => c.id === 'lib-pause');
-      if (!pauseCue) {
-        toast('Pause-Cue fehlt in der Bibliothek', 'error');
-        return;
-      }
-      state.playlist.push({ libraryId: 'lib-pause', note: 'PAUSE', resetTimer: true });
-      saveState();
-      renderPlaylistTab();
-      toast('Pause eingefügt', 'success');
-    });
     document.getElementById('playlist-template-select').addEventListener('change', (e) => {
       const template = e.target.value;
       if (!template) return;
