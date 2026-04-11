@@ -2642,9 +2642,9 @@ hr {
         makeDefaultCue('lib-warmweiss-100', 'Warmweiß 100%', 'Alle Cubes warmweiß auf voller Helligkeit', 500, 'custom', [0, 0, 0, 255], 100),
         makeDefaultCue('lib-warmweiss-50', 'Warmweiß 50%', 'Alle Cubes warmweiß auf halber Helligkeit', 500, 'custom', [0, 0, 0, 255], 50),
         makeDefaultCue('lib-notfall', 'NOTFALL Vollweiß', 'Notfall-Sicherheits-Cue: alle Cubes auf Vollweiß 100%', 0, 'custom', [255, 255, 255, 255], 100),
-        makeDefaultCue('lib-pause', '— Pause —', 'Blackout für Pause zwischen den Teilen', 1000, 'off'),
-        makeDefaultCue('lib-show-start', '▶ Show Anfang', 'Blackout — Show beginnt', 0, 'off'),
-        makeDefaultCue('lib-show-ende', '■ Show Ende', 'Blackout — Show ist zu Ende', 1000, 'off'),
+        makeDefaultCue('lib-pause', '⏸ Pause', 'Blackout für Pause zwischen den Teilen', 1000, 'off'),
+        makeDefaultCue('lib-show-start', '🎭 Show Anfang — Viel Spaß!', 'Blackout — Show beginnt', 0, 'off'),
+        makeDefaultCue('lib-show-ende', '🎉 Show Ende — Applaus!', 'Blackout — Show ist zu Ende', 1000, 'off'),
       ],
       playlist: [
         { libraryId: 'lib-show-start', note: 'Beginn' },
@@ -3411,6 +3411,7 @@ hr {
           <option value="toggle" ${slot.mode === 'toggle' ? 'selected' : ''}>Toggle</option>
           <option value="hold" ${slot.mode === 'hold' ? 'selected' : ''}>Halten</option>
         </select>
+        <button class="btn btn-icon test-quick-btn" data-slot="${i}" title="Test feuern">🔥</button>
         <button class="btn btn-icon clear-quick-btn" data-slot="${i}" title="Slot leeren">🗑</button>
       `;
       list.appendChild(row);
@@ -3440,6 +3441,28 @@ hr {
         updateQuickButton(slot, { mode: sel.value });
       });
     });
+    list.querySelectorAll('.test-quick-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const slot = parseInt(btn.dataset.slot, 10);
+        const qb = state.quickButtons.find(q => q.slot === slot);
+        if (!qb || !qb.libraryId) { toast('Slot ist leer', 'warning'); return; }
+        const cue = state.library.find(c => c.id === qb.libraryId);
+        if (!cue) return;
+        if (btn.classList.contains('test-active')) {
+          btn.classList.remove('test-active');
+          btn.style.background = '';
+          const offCue = state.library.find(c => c.id === 'lib-blackout');
+          if (offCue) await fireCue(offCue);
+          toast('Test aus', '');
+        } else {
+          list.querySelectorAll('.test-quick-btn.test-active').forEach(b => { b.classList.remove('test-active'); b.style.background = ''; });
+          btn.classList.add('test-active');
+          btn.style.background = 'var(--accent-go)';
+          toast(`Test: ${cue.name}`);
+          await fireCue(cue);
+        }
+      });
+    });
     list.querySelectorAll('.clear-quick-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const slot = parseInt(btn.dataset.slot, 10);
@@ -3453,7 +3476,7 @@ hr {
   function updateQuickButton(slot, updates) {
     let qb = state.quickButtons.find(q => q.slot === slot);
     if (!qb) {
-      qb = { slot, libraryId: null, label: '', color: '#ffffff' };
+      qb = { slot, libraryId: null, label: '', color: '#ffffff', mode: 'tap' };
       state.quickButtons.push(qb);
     }
     Object.assign(qb, updates);
@@ -4781,9 +4804,9 @@ hr {
 
   function loadPlaylistTemplate(template) {
     // Sicherstellen dass die benötigten Cues existieren
-    ensureLibraryCue('lib-show-start', '▶ Show Anfang', 'Blackout — Show beginnt', 0, 'off');
-    ensureLibraryCue('lib-show-ende', '■ Show Ende', 'Blackout — Show ist zu Ende', 1000, 'off');
-    ensureLibraryCue('lib-pause', '— Pause —', 'Blackout für Pause zwischen den Teilen', 1000, 'off');
+    ensureLibraryCue('lib-show-start', '🎭 Show Anfang — Viel Spaß!', 'Blackout — Show beginnt', 0, 'off');
+    ensureLibraryCue('lib-show-ende', '🎉 Show Ende — Applaus!', 'Blackout — Show ist zu Ende', 1000, 'off');
+    ensureLibraryCue('lib-pause', '⏸ Pause', 'Blackout für Pause zwischen den Teilen', 1000, 'off');
 
     confirmDialog('Vorlage laden?', 'Die aktuelle Playlist wird durch die Vorlage ersetzt.', () => {
       snapshotState();
