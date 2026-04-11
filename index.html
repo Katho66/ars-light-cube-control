@@ -1841,7 +1841,14 @@ hr {
         <!-- Playlist-Einträge werden dynamisch eingefügt -->
       </div>
       <div class="playlist-footer">
-        <button class="btn btn-primary" id="append-cue-btn" type="button">+ Cue am Ende anhängen</button>
+        <button class="btn btn-primary" id="append-cue-btn" type="button">+ Cue anhängen</button>
+        <button class="btn btn-secondary" id="insert-pause-btn" type="button">⏸ Pause einfügen</button>
+        <select id="playlist-template-select" class="search-input" style="min-width:160px">
+          <option value="">Vorlage laden…</option>
+          <option value="empty">Leere Show</option>
+          <option value="with-pause">Show mit Pause</option>
+          <option value="with-2-pauses">Show mit 2 Pausen</option>
+        </select>
         <span class="playlist-count" id="playlist-count">Gesamt: 0 Cues</span>
       </div>
     </section>
@@ -2629,10 +2636,14 @@ hr {
         makeDefaultCue('lib-warmweiss-100', 'Warmweiß 100%', 'Alle Cubes warmweiß auf voller Helligkeit', 500, 'custom', [0, 0, 0, 255], 100),
         makeDefaultCue('lib-warmweiss-50', 'Warmweiß 50%', 'Alle Cubes warmweiß auf halber Helligkeit', 500, 'custom', [0, 0, 0, 255], 50),
         makeDefaultCue('lib-notfall', 'NOTFALL Vollweiß', 'Notfall-Sicherheits-Cue: alle Cubes auf Vollweiß 100%', 0, 'custom', [255, 255, 255, 255], 100),
+        makeDefaultCue('lib-pause', '— PAUSE —', 'Blackout für Pause zwischen den Teilen', 1000, 'off'),
+        makeDefaultCue('lib-show-start', '▶ SHOW START', 'Blackout — Show beginnt', 0, 'off'),
+        makeDefaultCue('lib-show-ende', '■ SHOW ENDE', 'Blackout — Show ist zu Ende', 1000, 'off'),
       ],
       playlist: [
-        { libraryId: 'lib-blackout', note: 'Show-Beginn' },
+        { libraryId: 'lib-show-start', note: 'Beginn' },
         { libraryId: 'lib-warmweiss-50', note: 'Begrüßung' },
+        { libraryId: 'lib-show-ende', note: 'Ende' },
       ],
       quickButtons: [
         { slot: 1, libraryId: 'lib-warmweiss-100', label: 'WW 100', color: '#ffffff' },
@@ -3255,6 +3266,7 @@ hr {
         </div>
         <div class="playlist-note">
           <input type="text" value="${escapeHtml(entry.note || '')}" placeholder="Notiz..." data-idx="${idx}">
+          ${entry.resetTimer ? '<span style="font-size:10px;color:var(--accent-warning)" title="Timer wird hier neu gestartet">⏱ Reset</span>' : ''}
         </div>
         <div class="playlist-actions">
           <button class="btn btn-icon test-pl-cue-btn" data-library-id="${entry.libraryId}" title="Test feuern">🔥</button>
@@ -3774,11 +3786,15 @@ hr {
     // Zustand "Bereit" (ptr === -1): Noch kein Cue gefeuert
     if (ptr < 0) {
       current.innerHTML = `
-        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:16px;padding:24px">
-          <div style="font-size:clamp(18px,4vh,32px);font-weight:700;color:var(--accent-info)">${escapeHtml(state.show.name)}</div>
-          <div style="font-size:clamp(14px,2vh,18px);color:var(--text-secondary)">Bereit — GO drücken zum Starten</div>
-          <div style="font-size:clamp(12px,1.5vh,14px);color:var(--text-muted)">${state.playlist.length} Cues in der Playlist</div>
-          <button class="btn btn-go" id="current-go-btn" style="margin-top:16px">GO ▶</button>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">Bereit</div>
+        <div class="current-position" style="color:var(--accent-info)">—</div>
+        <div class="current-name">${escapeHtml(state.show.name)}</div>
+        <div class="current-detail">${state.playlist.length} Cues in der Playlist</div>
+        <div class="current-note">GO drücken zum Starten</div>
+        <div class="current-actions">
+          <button class="btn btn-prev" id="current-prev-btn" disabled>◀ Prev</button>
+          <button class="btn btn-go" id="current-go-btn">GO ▶</button>
+          <button class="btn live-edit-btn" id="current-edit-btn" disabled>✏️ Live-Edit</button>
         </div>
       `;
       document.getElementById('current-go-btn').addEventListener('click', goNext);
@@ -3998,8 +4014,13 @@ hr {
     // Cue feuern
     await fireCue(cue);
 
-    // Bestätigung anzeigen
-    toast(`✓ ${cue.name}`, 'success');
+    // Timer-Reset nach Pause (wenn in der Playlist so markiert)
+    if (entry.resetTimer) {
+      runtime.showStartTime = Date.now();
+      toast(`✓ ${cue.name} — Timer neu gestartet`, 'success');
+    } else {
+      toast(`✓ ${cue.name}`, 'success');
+    }
 
     // Mitte zeigt jetzt den AKTIVEN (gerade gefeuerten) Cue
     renderShowColumns();
@@ -4628,6 +4649,51 @@ hr {
   }
 
   // ==========================================================================
+  // Playlist-Vorlagen
+  // ==========================================================================
+
+  function loadPlaylistTemplate(template) {
+    // Sicherstellen dass die benötigten Cues existieren
+    ensureLibraryCue('lib-show-start', '▶ SHOW START', 'Blackout — Show beginnt', 0, 'off');
+    ensureLibraryCue('lib-show-ende', '■ SHOW ENDE', 'Blackout — Show ist zu Ende', 1000, 'off');
+    ensureLibraryCue('lib-pause', '— PAUSE —', 'Blackout für Pause zwischen den Teilen', 1000, 'off');
+
+    confirmDialog('Vorlage laden?', 'Die aktuelle Playlist wird durch die Vorlage ersetzt.', () => {
+      snapshotState();
+
+      if (template === 'empty') {
+        state.playlist = [
+          { libraryId: 'lib-show-start', note: 'Beginn' },
+          { libraryId: 'lib-show-ende', note: 'Ende' },
+        ];
+      } else if (template === 'with-pause') {
+        state.playlist = [
+          { libraryId: 'lib-show-start', note: 'Beginn' },
+          { libraryId: 'lib-pause', note: '—— PAUSE ——', resetTimer: true },
+          { libraryId: 'lib-show-ende', note: 'Ende' },
+        ];
+      } else if (template === 'with-2-pauses') {
+        state.playlist = [
+          { libraryId: 'lib-show-start', note: 'Beginn' },
+          { libraryId: 'lib-pause', note: '—— PAUSE 1 ——' },
+          { libraryId: 'lib-pause', note: '—— PAUSE 2 ——', resetTimer: true },
+          { libraryId: 'lib-show-ende', note: 'Ende' },
+        ];
+      }
+
+      saveState();
+      renderPlaylistTab();
+      toast(`Vorlage "${template}" geladen`, 'success');
+    });
+  }
+
+  function ensureLibraryCue(id, name, description, fadeTime, mode) {
+    if (!state.library.find(c => c.id === id)) {
+      state.library.push(makeDefaultCue(id, name, description, fadeTime, mode));
+    }
+  }
+
+  // ==========================================================================
   // Playlist CRUD
   // ==========================================================================
 
@@ -5212,6 +5278,24 @@ hr {
 
     // Playlist tab
     document.getElementById('append-cue-btn').addEventListener('click', () => openInsertCueDropdown(state.playlist.length));
+    document.getElementById('insert-pause-btn').addEventListener('click', () => {
+      // Pause ans Ende (oder an die aktuelle Position) einfügen
+      const pauseCue = state.library.find(c => c.id === 'lib-pause');
+      if (!pauseCue) {
+        toast('Pause-Cue fehlt in der Bibliothek', 'error');
+        return;
+      }
+      state.playlist.push({ libraryId: 'lib-pause', note: 'PAUSE', resetTimer: true });
+      saveState();
+      renderPlaylistTab();
+      toast('Pause eingefügt', 'success');
+    });
+    document.getElementById('playlist-template-select').addEventListener('change', (e) => {
+      const template = e.target.value;
+      if (!template) return;
+      loadPlaylistTemplate(template);
+      e.target.value = '';
+    });
     document.getElementById('export-playlist-btn').addEventListener('click', exportConfig);
     document.getElementById('import-playlist-btn').addEventListener('click', () => document.getElementById('import-file-input').click());
     document.getElementById('import-file-input').addEventListener('change', (e) => {
