@@ -3439,6 +3439,8 @@ hr {
       sel.addEventListener('change', () => {
         const slot = parseInt(sel.dataset.slot, 10);
         updateQuickButton(slot, { mode: sel.value });
+        saveState(true); // Sofort speichern, nicht debounced
+        toast(`Slot ${slot}: Modus → ${sel.value}`, 'success');
       });
     });
     list.querySelectorAll('.test-quick-btn').forEach(btn => {
@@ -4185,11 +4187,11 @@ hr {
     if (!qb || !qb.libraryId) return;
     const mode = qb.mode || 'tap';
 
+    console.log(`Quick-Button ${slot}: mode=${mode}, qb=`, JSON.stringify(qb));
+
     if (mode === 'toggle') {
       toggleQuickButton(slot);
     } else if (mode === 'hold') {
-      // Hold wird über pointerdown/pointerup gesteuert, nicht über dispatch
-      // Falls trotzdem hier aufgerufen (Keyboard): als Tap behandeln
       fireQuickButton(slot, false);
     } else {
       fireQuickButton(slot, false);
