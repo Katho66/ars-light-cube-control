@@ -4561,17 +4561,46 @@ hr {
       });
     });
 
-    // Pro-Cube Test-Buttons im Editor
+    // Pro-Cube Test-Buttons im Editor (Toggle: an/aus)
     container.querySelectorAll('.test-editor-cube-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
         const cubeId = parseInt(btn.dataset.cubeId, 10);
         const cube = state.cubes.find(c => c.id === cubeId);
         if (!cube) return;
-        const cubeActions = cue.actions.filter(a => a.cubeId === cubeId);
-        if (cubeActions.length === 0) return;
-        const body = buildCubeStateBody(cube, cubeActions, 0);
-        await sendToCube(cube, body);
-        toast(`Test: Cube ${cubeId}`);
+        if (btn.classList.contains('test-active')) {
+          btn.classList.remove('test-active');
+          btn.style.background = '';
+          await sendToCube(cube, { on: true, bri: 255, seg: [{ id: 0, on: true, fx: 0, col: [[0,0,0,0]], bri: 0 }] });
+        } else {
+          btn.classList.add('test-active');
+          btn.style.background = 'var(--accent-go)';
+          const cubeActions = cue.actions.filter(a => a.cubeId === cubeId);
+          const body = buildCubeStateBody(cube, cubeActions, 0);
+          await sendToCube(cube, body);
+        }
+      });
+    });
+
+    // Pro-Strip Test-Buttons (Toggle)
+    container.querySelectorAll('.test-editor-strip-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const cubeId = parseInt(btn.dataset.cube, 10);
+        const stripId = parseInt(btn.dataset.strip, 10);
+        const cube = state.cubes.find(c => c.id === cubeId);
+        if (!cube) return;
+        if (btn.classList.contains('test-active')) {
+          btn.classList.remove('test-active');
+          btn.style.background = '';
+          await sendToCube(cube, { seg: [{ id: stripId, on: true, fx: 0, col: [[0,0,0,0]], bri: 0 }] });
+        } else {
+          btn.classList.add('test-active');
+          btn.style.background = 'var(--accent-go)';
+          const action = cue.actions.find(a => a.cubeId === cubeId && a.stripId === stripId);
+          if (action) {
+            const body = buildCubeStateBody(cube, [action], 0);
+            await sendToCube(cube, body);
+          }
+        }
       });
     });
 
@@ -4616,7 +4645,10 @@ hr {
 
     return `
       <div class="cube-action-strip" data-cube="${cube.id}" data-strip="${strip.id}">
-        <h5>Strip ${strip.id}: "${escapeHtml(strip.name)}"</h5>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <h5 style="margin:0">Strip ${strip.id}: "${escapeHtml(strip.name)}"</h5>
+          <button class="btn btn-icon test-editor-strip-btn" data-cube="${cube.id}" data-strip="${strip.id}" type="button" title="Diesen Strip testen" style="font-size:11px;padding:2px 6px">🔥</button>
+        </div>
         <div class="mode-radio-group">
           <label><input type="radio" name="mode-${cube.id}-${strip.id}" value="off" ${action.mode === 'off' ? 'checked' : ''}> Aus</label>
           <label><input type="radio" name="mode-${cube.id}-${strip.id}" value="custom" ${action.mode === 'custom' ? 'checked' : ''}> Custom</label>
