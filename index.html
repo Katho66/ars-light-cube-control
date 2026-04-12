@@ -2059,7 +2059,7 @@ hr {
     </div>
 
     <div class="topbar-actions">
-      <span class="build-info" id="build-info">V3.1 · Build 2026-04-12 19:38</span>
+      <span class="build-info" id="build-info">V3.1 · Build 2026-04-12 19:44</span>
       <button id="shortcuts-help-btn" class="btn btn-icon" type="button" title="Tastatur-Shortcuts" style="font-size:18px;color:var(--text-secondary)">?</button>
       <button id="mode-toggle-btn" class="mode-toggle-btn" type="button">
         <span id="mode-toggle-label">Show ▶</span>
@@ -4566,12 +4566,25 @@ hr {
     const fireBtn = document.getElementById('preview-fire-btn');
     if (fireBtn) {
       fireBtn.addEventListener('click', async () => {
-        const cue = state.library.find(c => c.id === cueSelect.value);
-        if (cue) {
-          toast(`Test: ${cue.name}`);
-          await fireCue(cue);
+        if (fireBtn.classList.contains('test-active')) {
+          fireBtn.classList.remove('test-active');
+          fireBtn.style.background = '';
+          fireBtn.textContent = '🔥 Test';
+          for (const cube of state.cubes) {
+            await sendToCube(cube, { on: true, bri: 0, seg: [{ fx: 0, col: [[0,0,0,0]] }] });
+          }
+          toast('Test beendet', 'success');
         } else {
-          toast('Bitte einen Cue wählen', 'warning');
+          const cue = state.library.find(c => c.id === cueSelect.value);
+          if (cue) {
+            fireBtn.classList.add('test-active');
+            fireBtn.style.background = 'var(--accent)';
+            fireBtn.textContent = '⬛ Stopp';
+            toast(`Test: ${cue.name}`);
+            await fireCue(cue);
+          } else {
+            toast('Bitte einen Cue wählen', 'warning');
+          }
         }
       });
     }
