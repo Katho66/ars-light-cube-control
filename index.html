@@ -1797,7 +1797,7 @@ hr {
     </div>
 
     <div class="topbar-actions">
-      <span class="build-info" id="build-info">V3.1 · Build 2026-04-12 14:01</span>
+      <span class="build-info" id="build-info">V3.1 · Build 2026-04-12 15:13</span>
       <button id="shortcuts-help-btn" class="btn btn-icon" type="button" title="Tastatur-Shortcuts" style="font-size:18px;color:var(--text-secondary)">?</button>
       <button id="mode-toggle-btn" class="mode-toggle-btn" type="button">
         <span id="mode-toggle-label">Show ▶</span>
@@ -5476,12 +5476,17 @@ hr {
   function startReconnectPolling() {
     if (runtime.reconnectInterval) clearInterval(runtime.reconnectInterval);
     runtime.reconnectInterval = setInterval(async () => {
-      const offlineCubes = state.cubes.filter(c => runtime.cubeStatus[c.id] === 'offline');
-      for (const cube of offlineCubes) {
+      for (const cube of state.cubes) {
+        const wasBefore = runtime.cubeStatus[cube.id];
         const info = await fetchCubeInfo(cube);
-        if (info) {
+        const isNow = runtime.cubeStatus[cube.id];
+        if (wasBefore !== isNow) {
           renderCubeStatus();
-          toast(`${cube.name} wieder verbunden`, 'success');
+          if (isNow === 'online') {
+            toast(`${cube.name} wieder verbunden`, 'success');
+          } else {
+            toast(`${cube.name} offline`, 'warning');
+          }
         }
       }
     }, state.settings.reconnectPollMs || DEFAULT_RECONNECT_POLL_MS);
