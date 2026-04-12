@@ -1746,6 +1746,268 @@ hr {
 }
 
 /* ==========================================================================
+   Effect Browser — Smart effect selection UI
+   ========================================================================== */
+
+.effect-browser {
+  margin-bottom: var(--space-3);
+}
+
+.effect-browser-selected {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.effect-browser-current {
+  font-size: var(--text-md);
+  font-weight: 600;
+  color: var(--text-primary);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.effect-browser-toggle {
+  white-space: nowrap;
+  min-height: var(--touch-min);
+  padding: var(--space-2) var(--space-4) !important;
+}
+
+.effect-browser-panel {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.effect-browser-search {
+  margin-bottom: var(--space-3);
+}
+
+.effect-browser-search input {
+  width: 100%;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  color: var(--text-primary);
+  font-size: var(--text-base);
+  min-height: var(--touch-min);
+}
+
+.effect-browser-search input:focus {
+  outline: none;
+  border-color: var(--accent-info);
+}
+
+.effect-browser-search input::placeholder {
+  color: var(--text-muted);
+}
+
+.effect-browser-filters {
+  margin-bottom: var(--space-3);
+}
+
+/* Category filter row */
+.effect-category-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-bottom: var(--space-2);
+}
+
+.effect-cat-btn {
+  padding: var(--space-1) var(--space-3);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  min-height: 36px;
+  transition: all var(--transition-fast);
+  touch-action: manipulation;
+}
+
+.effect-cat-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.effect-cat-btn.active {
+  background: var(--accent-info);
+  color: #fff;
+  border-color: var(--accent-info);
+}
+
+/* Color type filter */
+.effect-color-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-bottom: var(--space-2);
+}
+
+.effect-color-btn {
+  padding: var(--space-1) var(--space-3);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  min-height: 36px;
+  transition: all var(--transition-fast);
+  touch-action: manipulation;
+}
+
+.effect-color-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.effect-color-btn.active {
+  background: var(--accent-purple);
+  color: #fff;
+  border-color: var(--accent-purple);
+}
+
+/* Alphabet quick-nav */
+.effect-alpha-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin-bottom: var(--space-2);
+}
+
+.effect-alpha-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  font-family: var(--font-mono);
+  transition: all var(--transition-fast);
+  touch-action: manipulation;
+}
+
+.effect-alpha-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.effect-alpha-btn.active {
+  background: var(--accent-go);
+  color: #fff;
+  border-color: var(--accent-go);
+}
+
+/* Effect card grid */
+.effect-browser-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: var(--space-2);
+  max-height: 320px;
+  overflow-y: auto;
+  padding: var(--space-1);
+  -webkit-overflow-scrolling: touch;
+}
+
+.effect-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-1);
+  background: var(--bg-tertiary);
+  border: 2px solid transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  min-height: 72px;
+  transition: all var(--transition-fast);
+  touch-action: manipulation;
+}
+
+.effect-card:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-default);
+}
+
+.effect-card.selected {
+  background: var(--bg-elevated);
+  border-color: var(--accent-info);
+  box-shadow: 0 0 0 1px var(--accent-info);
+}
+
+.effect-card[hidden] {
+  display: none !important;
+}
+
+.effect-card-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.effect-card-name {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+.effect-card.selected .effect-card-name {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.effect-card-preview {
+  display: none;
+  width: 100%;
+  height: 16px;
+  border-radius: var(--radius-sm);
+  margin-top: var(--space-1);
+  image-rendering: pixelated;
+}
+
+.effect-card.selected .effect-card-preview {
+  display: block;
+}
+
+/* Responsive: smaller screens get 3 columns */
+@media (max-width: 600px) {
+  .effect-browser-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .effect-alpha-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 10px;
+  }
+}
+
+/* iPad landscape: 5 columns */
+@media (min-width: 768px) {
+  .effect-browser-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    max-height: 400px;
+  }
+}
+
+/* ==========================================================================
    Reduced motion
    ========================================================================== */
 
@@ -1797,7 +2059,7 @@ hr {
     </div>
 
     <div class="topbar-actions">
-      <span class="build-info" id="build-info">V3.1 · Build 2026-04-12 15:13</span>
+      <span class="build-info" id="build-info">V3.1 · Build 2026-04-12 19:38</span>
       <button id="shortcuts-help-btn" class="btn btn-icon" type="button" title="Tastatur-Shortcuts" style="font-size:18px;color:var(--text-secondary)">?</button>
       <button id="mode-toggle-btn" class="mode-toggle-btn" type="button">
         <span id="mode-toggle-label">Show ▶</span>
@@ -2311,6 +2573,7 @@ hr {
       const inten = (intensity || 128) / 255;
       const col = baseColor || [255, 255, 255, 0];
 
+      // Dedicated renderers for specific effects
       switch (effectId) {
         case 0: return this.solid(col);
         case 1: return this.blink(col, spd, t);
@@ -2332,7 +2595,23 @@ hr {
         case 100: return this.heartbeat(col, spd, t);
         case 103: return this.solidGlitter(col);
         case 104: return this.sunrise(col, spd, t);
-        default: return this.solid(col); // Fallback
+      }
+
+      // Generic category-based renderers for all other effects
+      const simType = EFFECT_SIM_TYPE[effectId] || 'solid';
+      switch (simType) {
+        case 'wipe': return this.genWipe(col, spd, t);
+        case 'chase': return this.genChase(col, spd, inten, t);
+        case 'pulse': return this.genPulse(col, spd, t);
+        case 'sparkle': return this.genSparkle(col, inten);
+        case 'rainbow': return this.genRainbow(spd, t);
+        case 'fire': return this.genFire(inten, t);
+        case 'scan': return this.genScan(col, spd, t);
+        case 'strobe': return this.genStrobe(col, spd, t);
+        case 'wave': return this.genWave(col, spd, inten, t);
+        case 'gradient': return this.genGradient(col, spd, t);
+        case 'noise': return this.genNoise(col, spd, inten, t);
+        default: return this.solid(col);
       }
     }
 
@@ -2534,6 +2813,120 @@ hr {
       return this.pixels;
     }
 
+    // ===== Generic category-based renderers =====
+
+    genWipe(col, spd, t) {
+      const pos = ((t * spd * 15) % this.ledCount) | 0;
+      const width = Math.max(3, (this.ledCount * 0.3) | 0);
+      for (let i = 0; i < this.ledCount; i++) {
+        const dist = (i - pos + this.ledCount) % this.ledCount;
+        const bri = dist < width ? 1 - dist / width : 0;
+        this.pixels[i] = col.map(v => Math.round(v * bri));
+      }
+      return this.pixels;
+    }
+
+    genChase(col, spd, inten, t) {
+      const pos = Math.floor(t * spd * 18) % this.ledCount;
+      const segWidth = Math.max(1, Math.round(inten * 4));
+      const gap = Math.max(2, 6 - segWidth);
+      for (let i = 0; i < this.ledCount; i++) {
+        const inSegment = ((i - pos + this.ledCount) % this.ledCount) % (gap + segWidth) < segWidth;
+        this.pixels[i] = inSegment ? [...col] : [0, 0, 0, 0];
+      }
+      return this.pixels;
+    }
+
+    genPulse(col, spd, t) {
+      const bri = (Math.sin(t * spd * 4) + 1) / 2;
+      for (let i = 0; i < this.ledCount; i++) {
+        this.pixels[i] = col.map(v => Math.round(v * bri));
+      }
+      return this.pixels;
+    }
+
+    genSparkle(col, inten) {
+      for (let i = 0; i < this.ledCount; i++) {
+        if (Math.random() < inten * 0.15) {
+          this.pixels[i] = [255, 255, 255, 200];
+        } else {
+          const dim = 0.15 + Math.random() * 0.1;
+          this.pixels[i] = col.map(v => Math.round(v * dim));
+        }
+      }
+      return this.pixels;
+    }
+
+    genRainbow(spd, t) {
+      for (let i = 0; i < this.ledCount; i++) {
+        const hue = ((i / this.ledCount) * 360 + t * spd * 50) % 360;
+        const rgb = this.hslToRgb(hue, 1, 0.5);
+        this.pixels[i] = [...rgb, 0];
+      }
+      return this.pixels;
+    }
+
+    genFire(inten, t) {
+      for (let i = 0; i < this.ledCount; i++) {
+        const heat = Math.max(0, Math.min(1, inten * (0.4 + Math.random() * 0.6) - (i / this.ledCount) * 0.3));
+        const r = Math.min(255, Math.round(heat * 280));
+        const g = Math.min(255, Math.round(heat * heat * 160));
+        const b = Math.round(heat * heat * heat * 50);
+        this.pixels[i] = [r, g, b, 0];
+      }
+      return this.pixels;
+    }
+
+    genScan(col, spd, t) {
+      const cycle = (t * spd * 12) % (this.ledCount * 2);
+      const pos = cycle < this.ledCount ? cycle : this.ledCount * 2 - cycle;
+      for (let i = 0; i < this.ledCount; i++) {
+        const dist = Math.abs(i - pos);
+        const bri = Math.max(0, 1 - dist / 5);
+        this.pixels[i] = col.map(v => Math.round(v * bri));
+      }
+      return this.pixels;
+    }
+
+    genStrobe(col, spd, t) {
+      const on = Math.random() < 0.12 || Math.sin(t * spd * 25) > 0.85;
+      for (let i = 0; i < this.ledCount; i++) {
+        this.pixels[i] = on ? [...col] : [0, 0, 0, 0];
+      }
+      return this.pixels;
+    }
+
+    genWave(col, spd, inten, t) {
+      for (let i = 0; i < this.ledCount; i++) {
+        const phase = (i / this.ledCount) * Math.PI * 2 * (1 + inten * 3);
+        const bri = (Math.sin(phase + t * spd * 5) + 1) / 2;
+        this.pixels[i] = col.map(v => Math.round(v * bri));
+      }
+      return this.pixels;
+    }
+
+    genGradient(col, spd, t) {
+      const offset = (t * spd * 10) % 360;
+      for (let i = 0; i < this.ledCount; i++) {
+        const hue = ((i / this.ledCount) * 180 + offset) % 360;
+        const rgb = this.hslToRgb(hue, 0.7, 0.45);
+        this.pixels[i] = [...rgb, 0];
+      }
+      return this.pixels;
+    }
+
+    genNoise(col, spd, inten, t) {
+      for (let i = 0; i < this.ledCount; i++) {
+        // Pseudo-perlin via layered sine
+        const n1 = Math.sin(i * 0.7 + t * spd * 3) * 0.5;
+        const n2 = Math.sin(i * 1.3 + t * spd * 5.7) * 0.3;
+        const n3 = Math.sin(i * 2.9 + t * spd * 1.3) * 0.2;
+        const bri = Math.max(0, Math.min(1, (n1 + n2 + n3 + 0.5) * inten * 1.5));
+        this.pixels[i] = col.map(v => Math.round(v * bri));
+      }
+      return this.pixels;
+    }
+
     // Hilfsfunktion: HSL zu RGB
     hslToRgb(h, s, l) {
       h /= 360;
@@ -2545,6 +2938,68 @@ hr {
       return [f(0), f(8), f(4)];
     }
   }
+
+  // ==========================================================================
+  // Effect Simulation Type Mapping
+  // Maps effect IDs without dedicated renderers to generic sim types.
+  // Effects with dedicated renderers (0-3,6,8-10,13,17,20,23,28,57,66,76,88,100,103,104)
+  // are handled first in render() and never reach this map.
+  // ==========================================================================
+  const EFFECT_SIM_TYPE = {
+    // Basis
+    4: 'wipe', 5: 'rainbow', 7: 'noise',
+    // 10-19 (dedicated: 10,13,17)
+    11: 'scan', 12: 'pulse', 14: 'rainbow', 15: 'wipe', 16: 'wipe', 18: 'pulse', 19: 'pulse',
+    // 20-29 (dedicated: 20,23,28)
+    21: 'sparkle', 22: 'sparkle', 24: 'strobe', 25: 'strobe', 26: 'rainbow', 27: 'chase', 29: 'chase',
+    // 30-39
+    30: 'rainbow', 31: 'strobe', 32: 'strobe', 33: 'rainbow', 34: 'rainbow', 35: 'chase',
+    36: 'wipe', 37: 'wipe', 38: 'wave', 39: 'wipe',
+    // 40-49
+    40: 'scan', 41: 'scan', 42: 'strobe', 43: 'wave', 44: 'chase', 45: 'fire',
+    46: 'gradient', 47: 'scan', 48: 'strobe', 49: 'strobe',
+    // 50-59 (dedicated: 57)
+    50: 'scan', 51: 'gradient', 52: 'wipe', 53: 'sparkle', 54: 'chase', 55: 'wipe',
+    56: 'pulse', 58: 'scan', 59: 'scan',
+    // 60-69 (dedicated: 66)
+    60: 'scan', 61: 'wipe', 62: 'wave', 63: 'rainbow', 64: 'chase', 65: 'rainbow',
+    67: 'rainbow', 68: 'chase', 69: 'noise',
+    // 70-79 (dedicated: 76)
+    70: 'noise', 71: 'noise', 72: 'noise', 73: 'noise', 74: 'sparkle', 75: 'wave',
+    77: 'scan', 78: 'chase', 79: 'wave',
+    // 80-89 (dedicated: 88)
+    80: 'sparkle', 81: 'sparkle', 82: 'sparkle', 83: 'gradient', 84: 'gradient',
+    85: 'scan', 86: 'scan', 87: 'sparkle', 89: 'strobe',
+    // 90-99
+    90: 'strobe', 91: 'wave', 92: 'wave', 93: 'wave', 94: 'rainbow', 95: 'strobe',
+    96: 'wave', 97: 'noise', 98: 'gradient', 99: 'rainbow',
+    // 100-109 (dedicated: 100,103,104)
+    101: 'wave', 102: 'fire', 105: 'pulse', 106: 'sparkle', 107: 'noise', 108: 'wave', 109: 'noise',
+    // 110-117
+    110: 'wipe', 111: 'sparkle', 112: 'chase', 113: 'wave', 114: 'chase', 115: 'pulse',
+    116: 'noise', 117: 'noise',
+    // 118-127
+    118: 'sparkle', 119: 'wave', 120: 'chase', 121: 'wipe', 122: 'wave', 123: 'noise',
+    124: 'wave', 125: 'noise', 126: 'noise', 127: 'wave',
+    // 128-137
+    128: 'noise', 129: 'chase', 130: 'wave', 131: 'noise', 132: 'fire', 133: 'wave',
+    134: 'noise', 135: 'noise', 136: 'noise', 137: 'wave',
+    // 138-147
+    138: 'noise', 139: 'wave', 140: 'wave', 141: 'wave', 142: 'strobe', 143: 'chase',
+    144: 'noise', 145: 'wipe', 146: 'noise', 147: 'wave',
+    // 148-157
+    148: 'wave', 149: 'gradient', 150: 'wave', 151: 'wave', 152: 'wipe', 153: 'rainbow',
+    154: 'rainbow', 155: 'noise', 156: 'wave', 157: 'chase',
+    // 158-167
+    158: 'noise', 159: 'strobe', 160: 'noise', 161: 'noise', 162: 'wave', 163: 'noise',
+    164: 'noise', 165: 'wipe', 166: 'noise', 167: 'fire',
+    // 168-177
+    168: 'scan', 169: 'sparkle', 170: 'sparkle', 171: 'wipe', 172: 'wipe', 173: 'sparkle',
+    174: 'rainbow', 175: 'pulse', 176: 'sparkle', 177: 'fire',
+    // 178-186
+    178: 'gradient', 179: 'sparkle', 180: 'strobe', 181: 'sparkle', 182: 'chase',
+    183: 'chase', 184: 'wave', 185: 'wipe', 186: 'wave',
+  };
 
   // Globale Simulator-Instanzen pro Cube/Strip
   const effectSimulators = {};
@@ -2564,121 +3019,267 @@ hr {
   // ACHTUNG: Diese Liste gilt für WLED 0.15.x. Bei Firmware-Updates
   // Effekt-IDs prüfen unter: http://<CUBE-IP>/json/effects
   const WLED_FW_VERSION = '0.15.x';
+
+  // Kategorien (Deutsch)
+  const EFFECT_CATEGORIES = [
+    'Alle', 'Basis', 'Pulsierend', 'Lauflicht', 'Regenbogen',
+    'Funkeln', 'Blitz/Funken', 'Feuer/Wasser', 'Party', 'Weihnachten', 'Speziell'
+  ];
+
   const WLED_EFFECTS = [
-    // Basis / Statisch
-    { id: 0, name: 'Solid', category: 'Basis', desc: 'Einfarbig — Haupt-Workhorse' },
-    { id: 1, name: 'Blink', category: 'Basis', desc: 'Ein/Aus zwischen zwei Farben' },
-    { id: 83, name: 'Solid Pattern', category: 'Basis', desc: 'Abwechselnd an/aus LEDs' },
-    { id: 103, name: 'Solid Glitter', category: 'Basis', desc: 'Einfarbig + weißes Funkeln (Andreas\' Sparkling!)' },
-    { id: 98, name: 'Percent', category: 'Basis', desc: 'Prozent des Strips beleuchtet' },
-    // Pulsieren / Atmen
-    { id: 2, name: 'Breathe', category: 'Pulsieren', desc: 'Sanftes Pulsieren zwischen zwei Farben' },
-    { id: 12, name: 'Fade', category: 'Pulsieren', desc: 'Weicher Farbübergang' },
-    { id: 100, name: 'Heartbeat', category: 'Pulsieren', desc: 'Rhythmischer Herzschlag-Puls' },
-    { id: 104, name: 'Sunrise', category: 'Pulsieren', desc: 'Langsames Aufhellen — ideal für Show-Beginn' },
-    { id: 56, name: 'Tri Fade', category: 'Pulsieren', desc: 'Drei-Farben-Kreislauf' },
-    // Lauf-Effekte
-    { id: 3, name: 'Wipe', category: 'Lauf', desc: 'Farbwisch von einer Seite' },
-    { id: 6, name: 'Sweep', category: 'Lauf', desc: 'Wisch hin und zurück' },
-    { id: 10, name: 'Scan', category: 'Lauf', desc: 'Punkt hin und her (Lauflicht)' },
-    { id: 11, name: 'Dual Scan', category: 'Lauf', desc: 'Zwei Punkte von beiden Enden' },
-    { id: 28, name: 'Chase', category: 'Lauf', desc: '2 LEDs jagen auf Hintergrundfarbe' },
-    { id: 37, name: 'Running 2', category: 'Lauf', desc: 'Abwechselnde Farbblöcke laufen' },
-    { id: 40, name: 'Scanner', category: 'Lauf', desc: 'Punkt mit Schweif (KITT-Effekt)' },
-    { id: 41, name: 'Lighthouse', category: 'Lauf', desc: 'Leuchtturm-Sweep mit Schweif' },
-    { id: 76, name: 'Meteor', category: 'Lauf', desc: 'Sternschnuppe mit Farbschweif' },
-    { id: 77, name: 'Meteor Smooth', category: 'Lauf', desc: 'Weiche Sternschnuppe' },
-    { id: 13, name: 'Theater', category: 'Lauf', desc: 'Theater-Marquee-Lauflicht' },
-    { id: 27, name: 'Android', category: 'Lauf', desc: 'Variable Segment-Länge laufend' },
-    // Regenbogen & Farbe
-    { id: 8, name: 'Colorloop', category: 'Farbe', desc: 'Alle LEDs wechseln gemeinsam durch Regenbogen' },
-    { id: 9, name: 'Rainbow', category: 'Farbe', desc: 'Regenbogen-Gradient auf dem Strip' },
-    { id: 14, name: 'Theater Rainbow', category: 'Farbe', desc: 'Theater-Lauflicht in Regenbogen' },
-    { id: 34, name: 'Colorful', category: 'Farbe', desc: 'Wechselndes RAGB-Muster' },
-    { id: 63, name: 'Pride 2015', category: 'Farbe', desc: 'Regenbogen mit Helligkeits-Variation' },
-    { id: 65, name: 'Palette', category: 'Farbe', desc: 'Laufende Palette-Farben' },
-    { id: 67, name: 'Colorwaves', category: 'Farbe', desc: 'Palette-basierte Farbwellen' },
-    // Funkeln & Glitzer
-    { id: 17, name: 'Twinkle', category: 'Funkeln', desc: 'Zufällige LEDs leuchten kurz auf' },
-    { id: 20, name: 'Sparkle', category: 'Funkeln', desc: 'Schnelle weiße Funken auf Hintergrund' },
-    { id: 21, name: 'Sparkle Dark', category: 'Funkeln', desc: 'Alle an, zufällige gehen kurz aus' },
-    { id: 74, name: 'Colortwinkles', category: 'Funkeln', desc: 'Mehrfarbiges zufälliges Funkeln' },
-    { id: 80, name: 'Twinklefox', category: 'Funkeln', desc: 'Sanftes Ein-/Ausblenden — elegant' },
-    { id: 81, name: 'Twinklecat', category: 'Funkeln', desc: 'Schnell an, langsam aus' },
-    { id: 87, name: 'Glitter', category: 'Funkeln', desc: 'Regenbogen + weiße Funken' },
-    // Strobe & Flash
-    { id: 23, name: 'Strobe', category: 'Strobe', desc: 'Kurzer Blitz — Bühnen-Strobe' },
-    { id: 25, name: 'Strobe Mega', category: 'Strobe', desc: 'Mehrfache schnelle Blitze' },
-    { id: 24, name: 'Strobe Rainbow', category: 'Strobe', desc: 'Strobe in wechselnden Regenbogenfarben' },
-    { id: 57, name: 'Lightning', category: 'Strobe', desc: 'Zufällige Blitze — dramatisch' },
-    // Atmosphäre
-    { id: 38, name: 'Aurora', category: 'Atmosphäre', desc: 'Nordlicht-Simulation' },
-    { id: 66, name: 'Fire 2012', category: 'Atmosphäre', desc: 'Realistische Feuer-Simulation' },
-    { id: 88, name: 'Candle', category: 'Atmosphäre', desc: 'Einzelne Kerzenflamme' },
-    { id: 75, name: 'Lake', category: 'Atmosphäre', desc: 'Ruhige Palette-Wellen' },
-    { id: 101, name: 'Pacifica', category: 'Atmosphäre', desc: 'Sanfte blau-grüne Ozeanwellen' },
-    { id: 68, name: 'BPM', category: 'Atmosphäre', desc: 'Tempo-Pulse — für Musik-Szenen' },
-    { id: 79, name: 'Ripple', category: 'Atmosphäre', desc: 'Wasser-Kräusel-Effekt' },
-    { id: 97, name: 'Plasma', category: 'Atmosphäre', desc: 'Plasma-Lampen-Look' },
-    { id: 91, name: 'Bouncing Balls', category: 'Atmosphäre', desc: 'Springende Bälle (Physik)' },
-    { id: 62, name: 'Oscillate', category: 'Atmosphäre', desc: 'Farben bewegen sich zwischen Enden' },
-    { id: 18, name: 'Dissolve', category: 'Atmosphäre', desc: 'Zufälliges Füllen/Auflösen — für Übergänge' },
+    // === 0-9: Basis & Grundeffekte ===
+    { id: 0, name: 'Solid', icon: '⬛', tags: 'einfarbig statisch basis farbe', category: 'Basis', colors: 'single', params: ['color'] },
+    { id: 1, name: 'Blink', icon: '💡', tags: 'blinken ein aus wechsel', category: 'Basis', colors: 'multi', params: ['speed', 'intensity', 'color'] },
+    { id: 2, name: 'Breathe', icon: '🫁', tags: 'atmen pulsieren sanft langsam', category: 'Pulsierend', colors: 'multi', params: ['speed', 'color'] },
+    { id: 3, name: 'Wipe', icon: '👉', tags: 'wischen laufen seite fegen', category: 'Lauflicht', colors: 'multi', params: ['speed', 'color'] },
+    { id: 4, name: 'Wipe Random', icon: '🔀', tags: 'wischen zufall bunt', category: 'Lauflicht', colors: 'palette', params: ['speed', 'palette'] },
+    { id: 5, name: 'Random Colors', icon: '🎲', tags: 'zufall farben bunt wechsel', category: 'Regenbogen', colors: 'none', params: ['speed', 'intensity'] },
+    { id: 6, name: 'Sweep', icon: '↔️', tags: 'pendel hin zurueck wischen', category: 'Lauflicht', colors: 'multi', params: ['speed', 'color'] },
+    { id: 7, name: 'Dynamic', icon: '🌊', tags: 'dynamisch wechselnd zufall', category: 'Speziell', colors: 'multi', params: ['speed', 'intensity', 'color'] },
+    { id: 8, name: 'Colorloop', icon: '🔄', tags: 'regenbogen rotation farbe kreis', category: 'Regenbogen', colors: 'none', params: ['speed'] },
+    { id: 9, name: 'Rainbow', icon: '🌈', tags: 'regenbogen gradient bunt spektrum', category: 'Regenbogen', colors: 'none', params: ['speed', 'palette'] },
+
+    // === 10-19 ===
+    { id: 10, name: 'Scan', icon: '🔍', tags: 'scanner lauflicht punkt hin her', category: 'Lauflicht', colors: 'single', params: ['speed', 'color'] },
+    { id: 11, name: 'Dual Scan', icon: '🔎', tags: 'doppel scanner zwei punkte', category: 'Lauflicht', colors: 'single', params: ['speed', 'color'] },
+    { id: 12, name: 'Fade', icon: '🌅', tags: 'verblassen uebergang sanft pulsieren', category: 'Pulsierend', colors: 'multi', params: ['speed', 'color'] },
+    { id: 13, name: 'Theater', icon: '🎭', tags: 'theater lauflicht marquee klassisch', category: 'Lauflicht', colors: 'multi', params: ['speed', 'color'] },
+    { id: 14, name: 'Theater Rainbow', icon: '🎪', tags: 'theater regenbogen lauflicht bunt', category: 'Regenbogen', colors: 'none', params: ['speed'] },
+    { id: 15, name: 'Running', icon: '🏃', tags: 'laufen rennen schnell bewegen', category: 'Lauflicht', colors: 'multi', params: ['speed', 'color'] },
+    { id: 16, name: 'Saw', icon: '🪚', tags: 'saege welle asymmetrisch', category: 'Lauflicht', colors: 'multi', params: ['speed', 'color'] },
+    { id: 17, name: 'Twinkle', icon: '✨', tags: 'funkeln sterne leuchten zufall', category: 'Funkeln', colors: 'multi', params: ['speed', 'intensity', 'color'] },
+    { id: 18, name: 'Dissolve', icon: '💨', tags: 'aufloesen zufall uebergang', category: 'Speziell', colors: 'multi', params: ['speed', 'intensity', 'color'] },
+    { id: 19, name: 'Dissolve Rnd', icon: '💫', tags: 'aufloesen zufall bunt', category: 'Speziell', colors: 'none', params: ['speed', 'intensity'] },
+
+    // === 20-29 ===
+    { id: 20, name: 'Sparkle', icon: '✳️', tags: 'funken blitz weiss schnell', category: 'Funkeln', colors: 'single', params: ['speed', 'intensity', 'color'] },
+    { id: 21, name: 'Sparkle Dark', icon: '🌑', tags: 'funken dunkel ausblenden', category: 'Funkeln', colors: 'single', params: ['speed', 'intensity', 'color'] },
+    { id: 22, name: 'Sparkle+', icon: '⭐', tags: 'funken plus hell', category: 'Funkeln', colors: 'single', params: ['speed', 'intensity', 'color'] },
+    { id: 23, name: 'Strobe', icon: '⚡', tags: 'strobe blitz stroboskop buehne', category: 'Blitz/Funken', colors: 'single', params: ['speed', 'color'] },
+    { id: 24, name: 'Strobe Rainbow', icon: '🌈⚡', tags: 'strobe regenbogen blitz bunt', category: 'Blitz/Funken', colors: 'none', params: ['speed'] },
+    { id: 25, name: 'Strobe Mega', icon: '💥', tags: 'strobe mega stark blitz', category: 'Blitz/Funken', colors: 'single', params: ['speed', 'color'] },
+    { id: 26, name: 'Blink Rainbow', icon: '🌈💡', tags: 'blinken regenbogen wechsel', category: 'Regenbogen', colors: 'none', params: ['speed'] },
+    { id: 27, name: 'Android', icon: '🤖', tags: 'android laufen segment variabel', category: 'Lauflicht', colors: 'multi', params: ['speed', 'intensity', 'color'] },
+    { id: 28, name: 'Chase', icon: '🏎️', tags: 'jagen verfolgen laufen schnell', category: 'Lauflicht', colors: 'multi', params: ['speed', 'intensity', 'color'] },
+    { id: 29, name: 'Chase Random', icon: '🎰', tags: 'jagen zufall bunt', category: 'Lauflicht', colors: 'none', params: ['speed', 'intensity'] },
+
+    // === 30-39 ===
+    { id: 30, name: 'Chase Rainbow', icon: '🌈🏎️', tags: 'jagen regenbogen bunt', category: 'Regenbogen', colors: 'none', params: ['speed', 'intensity'] },
+    { id: 31, name: 'Chase Flash', icon: '⚡🏎️', tags: 'jagen blitz flash', category: 'Blitz/Funken', colors: 'multi', params: ['speed', 'color'] },
+    { id: 32, name: 'Chase Flash Rnd', icon: '🔀⚡', tags: 'jagen blitz zufall', category: 'Blitz/Funken', colors: 'none', params: ['speed'] },
+    { id: 33, name: 'Rainbow Runner', icon: '🏃🌈', tags: 'regenbogen laufen rennen', category: 'Regenbogen', colors: 'none', params: ['speed'] },
+    { id: 34, name: 'Colorful', icon: '🎨', tags: 'bunt farben wechsel ragb', category: 'Regenbogen', colors: 'multi', params: ['speed', 'intensity', 'color'] },
+    { id: 35, name: 'Traffic Light', icon: '🚦', tags: 'ampel rot gelb gruen wechsel', category: 'Speziell', colors: 'multi', params: ['speed', 'color'] },
+    { id: 36, name: 'Sweep Random', icon: '🔀↔️', tags: 'wischen zufall pendel', category: 'Lauflicht', colors: 'none', params: ['speed'] },
+    { id: 37, name: 'Running 2', icon: '🏃‍♂️', tags: 'laufen bloecke abwechselnd', category: 'Lauflicht', colors: 'multi', params: ['speed', 'color'] },
+    { id: 38, name: 'Aurora', icon: '🌌', tags: 'nordlicht polar aurora natur', category: 'Feuer/Wasser', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 39, name: 'Stream', icon: '🌀', tags: 'strom fliessen bewegen', category: 'Lauflicht', colors: 'palette', params: ['speed', 'palette'] },
+
+    // === 40-49 ===
+    { id: 40, name: 'Scanner', icon: '📡', tags: 'scanner kitt lauflicht schweif', category: 'Lauflicht', colors: 'single', params: ['speed', 'color'] },
+    { id: 41, name: 'Lighthouse', icon: '🗼', tags: 'leuchtturm sweep drehen', category: 'Lauflicht', colors: 'single', params: ['speed', 'color'] },
+    { id: 42, name: 'Fireworks', icon: '🎆', tags: 'feuerwerk explosion party silvester', category: 'Party', colors: 'multi', params: ['speed', 'intensity', 'color'] },
+    { id: 43, name: 'Rain', icon: '🌧️', tags: 'regen tropfen fallen wasser natur', category: 'Feuer/Wasser', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 44, name: 'Tetrix', icon: '🧱', tags: 'tetris spiel bloecke fallen', category: 'Speziell', colors: 'multi', params: ['speed', 'intensity', 'color'] },
+    { id: 45, name: 'Fire Flicker', icon: '🔥', tags: 'feuer flackern flamme warm', category: 'Feuer/Wasser', colors: 'single', params: ['speed', 'intensity', 'color'] },
+    { id: 46, name: 'Gradient', icon: '🎨', tags: 'gradient verlauf sanft uebergang', category: 'Basis', colors: 'palette', params: ['speed', 'palette'] },
+    { id: 47, name: 'Loading', icon: '⏳', tags: 'laden warten fortschritt', category: 'Lauflicht', colors: 'single', params: ['speed', 'color'] },
+    { id: 48, name: 'Police', icon: '🚔', tags: 'polizei blaulicht rot blau alarm', category: 'Party', colors: 'none', params: ['speed'] },
+    { id: 49, name: 'Police All', icon: '🚨', tags: 'polizei alle blaulicht alarm', category: 'Party', colors: 'none', params: ['speed'] },
+
+    // === 50-59 ===
+    { id: 50, name: 'Two Dots', icon: '🔵🔴', tags: 'zwei punkte laufen doppel', category: 'Lauflicht', colors: 'multi', params: ['speed', 'color'] },
+    { id: 51, name: 'Two Areas', icon: '🟦🟥', tags: 'zwei bereiche haelfte', category: 'Basis', colors: 'multi', params: ['speed', 'color'] },
+    { id: 52, name: 'Running Dual', icon: '🏃‍♀️🏃', tags: 'laufen doppel gegen', category: 'Lauflicht', colors: 'multi', params: ['speed', 'color'] },
+    { id: 53, name: 'Halloween', icon: '🎃', tags: 'halloween orange lila gruselig', category: 'Speziell', colors: 'none', params: ['speed'] },
+    { id: 54, name: 'Tri Chase', icon: '🏎️🏎️🏎️', tags: 'drei jagen dreifach', category: 'Lauflicht', colors: 'multi', params: ['speed', 'color'] },
+    { id: 55, name: 'Tri Wipe', icon: '👉👉👉', tags: 'drei wischen dreifach', category: 'Lauflicht', colors: 'multi', params: ['speed', 'color'] },
+    { id: 56, name: 'Tri Fade', icon: '🔄🎨', tags: 'drei farben kreislauf pulsieren', category: 'Pulsierend', colors: 'multi', params: ['speed', 'color'] },
+    { id: 57, name: 'Lightning', icon: '🌩️', tags: 'blitz gewitter donner dramatisch', category: 'Blitz/Funken', colors: 'single', params: ['speed', 'intensity', 'color'] },
+    { id: 58, name: 'ICU', icon: '🏥', tags: 'krankenhaus monitor piepen', category: 'Speziell', colors: 'single', params: ['speed', 'color'] },
+    { id: 59, name: 'Multi Comet', icon: '☄️☄️', tags: 'mehrere kometen schweif', category: 'Lauflicht', colors: 'palette', params: ['speed', 'palette'] },
+
+    // === 60-69 ===
+    { id: 60, name: 'Scanner Dual', icon: '📡📡', tags: 'doppel scanner zwei lauflicht', category: 'Lauflicht', colors: 'single', params: ['speed', 'color'] },
+    { id: 61, name: 'Stream 2', icon: '🌀🌀', tags: 'strom fliessen doppel', category: 'Lauflicht', colors: 'palette', params: ['speed', 'palette'] },
+    { id: 62, name: 'Oscillate', icon: '〰️', tags: 'oszillieren pendel bewegen enden', category: 'Pulsierend', colors: 'multi', params: ['speed', 'color'] },
+    { id: 63, name: 'Pride 2015', icon: '🏳️‍🌈', tags: 'pride regenbogen vielfalt', category: 'Regenbogen', colors: 'none', params: ['speed', 'palette'] },
+    { id: 64, name: 'Juggle', icon: '🤹', tags: 'jonglieren punkte springend', category: 'Party', colors: 'palette', params: ['speed', 'palette'] },
+    { id: 65, name: 'Palette', icon: '🎨', tags: 'palette farben laufend gradient', category: 'Regenbogen', colors: 'palette', params: ['speed', 'palette'] },
+    { id: 66, name: 'Fire 2012', icon: '🔥', tags: 'feuer flamme heiss realistisch', category: 'Feuer/Wasser', colors: 'none', params: ['speed', 'intensity'] },
+    { id: 67, name: 'Colorwaves', icon: '🌊🎨', tags: 'farbwellen palette wellen sanft', category: 'Regenbogen', colors: 'palette', params: ['speed', 'palette'] },
+    { id: 68, name: 'BPM', icon: '🥁', tags: 'bpm tempo beat musik rhythmus', category: 'Party', colors: 'palette', params: ['speed', 'palette'] },
+    { id: 69, name: 'Fill Noise', icon: '📊', tags: 'rauschen zufall muster', category: 'Speziell', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+
+    // === 70-79 ===
+    { id: 70, name: 'Noise 1', icon: '📈', tags: 'rauschen organisch perlin', category: 'Speziell', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 71, name: 'Noise 2', icon: '📉', tags: 'rauschen variante perlin', category: 'Speziell', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 72, name: 'Noise 3', icon: '📊', tags: 'rauschen variante perlin', category: 'Speziell', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 73, name: 'Noise 4', icon: '📈', tags: 'rauschen variante perlin', category: 'Speziell', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 74, name: 'Colortwinkles', icon: '✨🎨', tags: 'funkeln bunt farben zufall', category: 'Funkeln', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 75, name: 'Lake', icon: '🏞️', tags: 'see wasser ruhig wellen natur', category: 'Feuer/Wasser', colors: 'palette', params: ['speed', 'palette'] },
+    { id: 76, name: 'Meteor', icon: '☄️', tags: 'meteor sternschnuppe schweif', category: 'Lauflicht', colors: 'single', params: ['speed', 'color'] },
+    { id: 77, name: 'Meteor Smooth', icon: '🌠', tags: 'meteor weich sanft sternschnuppe', category: 'Lauflicht', colors: 'single', params: ['speed', 'color'] },
+    { id: 78, name: 'Railway', icon: '🚂', tags: 'eisenbahn zug abwechselnd', category: 'Speziell', colors: 'multi', params: ['speed', 'color'] },
+    { id: 79, name: 'Ripple', icon: '💧', tags: 'welle kreise wasser tropfen', category: 'Feuer/Wasser', colors: 'multi', params: ['speed', 'intensity', 'color'] },
+
+    // === 80-89 ===
+    { id: 80, name: 'Twinklefox', icon: '🦊✨', tags: 'funkeln elegant sanft ein aus', category: 'Funkeln', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 81, name: 'Twinklecat', icon: '🐱✨', tags: 'funkeln schnell an langsam aus', category: 'Funkeln', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 82, name: 'Twinkleup', icon: '⬆️✨', tags: 'funkeln aufwaerts hell', category: 'Funkeln', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 83, name: 'Solid Pattern', icon: '🔲', tags: 'muster statisch abwechselnd raster', category: 'Basis', colors: 'multi', params: ['speed', 'intensity', 'color'] },
+    { id: 84, name: 'Solid Pattern Tri', icon: '🔳', tags: 'muster drei farben statisch', category: 'Basis', colors: 'multi', params: ['speed', 'intensity', 'color'] },
+    { id: 85, name: 'Spots', icon: '🔴', tags: 'punkte flecken rund', category: 'Lauflicht', colors: 'single', params: ['speed', 'intensity', 'color'] },
+    { id: 86, name: 'Spots Fade', icon: '🟡', tags: 'punkte verblassen weich', category: 'Lauflicht', colors: 'single', params: ['speed', 'intensity', 'color'] },
+    { id: 87, name: 'Glitter', icon: '💎', tags: 'glitzer funken regenbogen weiss', category: 'Funkeln', colors: 'palette', params: ['speed', 'palette'] },
+    { id: 88, name: 'Candle', icon: '🕯️', tags: 'kerze flamme flackern warm', category: 'Feuer/Wasser', colors: 'single', params: ['color'] },
+    { id: 89, name: 'Fireworks Starburst', icon: '🎇', tags: 'feuerwerk stern burst explosion', category: 'Party', colors: 'multi', params: ['speed', 'intensity', 'color'] },
+
+    // === 90-99 ===
+    { id: 90, name: 'Fireworks 1D', icon: '🎆', tags: 'feuerwerk eindimensional rakete', category: 'Party', colors: 'multi', params: ['speed', 'intensity', 'color'] },
+    { id: 91, name: 'Bouncing Balls', icon: '🏀', tags: 'springend baelle physik huepfen', category: 'Speziell', colors: 'multi', params: ['speed', 'intensity', 'color'] },
+    { id: 92, name: 'Sinelon', icon: '〰️', tags: 'sinus welle punkt pendel', category: 'Lauflicht', colors: 'palette', params: ['speed', 'palette'] },
+    { id: 93, name: 'Sinelon Dual', icon: '〰️〰️', tags: 'sinus doppel zwei welle', category: 'Lauflicht', colors: 'palette', params: ['speed', 'palette'] },
+    { id: 94, name: 'Sinelon Rainbow', icon: '〰️🌈', tags: 'sinus regenbogen bunt', category: 'Regenbogen', colors: 'none', params: ['speed'] },
+    { id: 95, name: 'Popcorn', icon: '🍿', tags: 'popcorn springen zufall party', category: 'Party', colors: 'multi', params: ['speed', 'intensity', 'color'] },
+    { id: 96, name: 'Drip', icon: '💧', tags: 'tropfen fallen wasser', category: 'Feuer/Wasser', colors: 'multi', params: ['speed', 'intensity', 'color'] },
+    { id: 97, name: 'Plasma', icon: '🟣', tags: 'plasma lampe organisch', category: 'Speziell', colors: 'palette', params: ['speed', 'palette'] },
+    { id: 98, name: 'Percent', icon: '📊', tags: 'prozent balken fortschritt fuellen', category: 'Basis', colors: 'single', params: ['intensity', 'color'] },
+    { id: 99, name: 'Ripple Rainbow', icon: '💧🌈', tags: 'welle regenbogen bunt kreise', category: 'Regenbogen', colors: 'none', params: ['speed', 'intensity'] },
+
+    // === 100-109 ===
+    { id: 100, name: 'Heartbeat', icon: '💓', tags: 'herzschlag puls rhythmus leben', category: 'Pulsierend', colors: 'single', params: ['speed', 'color'] },
+    { id: 101, name: 'Pacifica', icon: '🌊', tags: 'ozean meer wasser blau gruen sanft', category: 'Feuer/Wasser', colors: 'none', params: ['speed', 'palette'] },
+    { id: 102, name: 'Candle Multi', icon: '🕯️🕯️', tags: 'kerzen mehrere flammen warm', category: 'Feuer/Wasser', colors: 'palette', params: ['speed', 'palette'] },
+    { id: 103, name: 'Solid Glitter', icon: '✨⬛', tags: 'einfarbig glitzer funken andreas sparkling', category: 'Funkeln', colors: 'single', params: ['intensity', 'color'] },
+    { id: 104, name: 'Sunrise', icon: '🌅', tags: 'sonnenaufgang aufhellen morgen langsam', category: 'Pulsierend', colors: 'single', params: ['speed', 'color'] },
+    { id: 105, name: 'Phased', icon: '🌙', tags: 'phase mond welle', category: 'Pulsierend', colors: 'palette', params: ['speed', 'palette'] },
+    { id: 106, name: 'TwinkleUp', icon: '⬆️✨', tags: 'funkeln hoch aufsteigend', category: 'Funkeln', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 107, name: 'Noise Pal', icon: '🎵', tags: 'rauschen palette organisch', category: 'Speziell', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 108, name: 'Sine', icon: '📐', tags: 'sinus welle mathematisch', category: 'Pulsierend', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 109, name: 'Phased Noise', icon: '🌙📊', tags: 'phase rauschen welle', category: 'Speziell', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+
+    // === 110-119 ===
+    { id: 110, name: 'Flow', icon: '🌬️', tags: 'fliessen strom sanft bewegen', category: 'Lauflicht', colors: 'palette', params: ['speed', 'palette'] },
+    { id: 111, name: 'Chunchun', icon: '🐦', tags: 'vogel natur bunt zwitschern', category: 'Speziell', colors: 'palette', params: ['speed', 'palette'] },
+    { id: 112, name: 'Dancing Shadows', icon: '💃', tags: 'tanzen schatten bewegen tanz', category: 'Party', colors: 'palette', params: ['speed', 'palette'] },
+    { id: 113, name: 'Washing Machine', icon: '🫧', tags: 'waschmaschine drehen schleudern', category: 'Speziell', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 114, name: 'Candy Cane', icon: '🍬', tags: 'zuckerstange weihnachten rot weiss', category: 'Weihnachten', colors: 'multi', params: ['speed', 'color'] },
+    { id: 115, name: 'Blends', icon: '🫗', tags: 'mischen uebergang blend', category: 'Pulsierend', colors: 'palette', params: ['speed', 'palette'] },
+    { id: 116, name: 'TV Simulator', icon: '📺', tags: 'fernseher simulation licht flacker', category: 'Speziell', colors: 'none', params: ['speed', 'intensity'] },
+    { id: 117, name: 'Dynamic Smooth', icon: '🌊', tags: 'dynamisch weich sanft', category: 'Speziell', colors: 'multi', params: ['speed', 'intensity', 'color'] },
+
+    // === 118-127: Audioreaktiv (benötigen Mikrofon, hier trotzdem gelistet) ===
+    { id: 118, name: 'Pixels', icon: '🟩', tags: 'pixel einzeln zufall', category: 'Speziell', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 119, name: 'Pixelwave', icon: '🟩🌊', tags: 'pixel welle laufen', category: 'Speziell', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 120, name: 'Juggles', icon: '🤹🤹', tags: 'jonglieren mehrfach punkte', category: 'Party', colors: 'palette', params: ['speed', 'palette'] },
+    { id: 121, name: 'Matripix', icon: '🟢', tags: 'matrix pixel regen', category: 'Speziell', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 122, name: 'Gravimeter', icon: '⚖️', tags: 'schwerkraft messen physik', category: 'Speziell', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 123, name: 'Plasmoid', icon: '🟣💥', tags: 'plasma explosion energie', category: 'Speziell', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 124, name: 'Puddles', icon: '💧💧', tags: 'pfuetzen wasser tropfen', category: 'Feuer/Wasser', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 125, name: 'Midnoise', icon: '🌃', tags: 'nacht rauschen dunkel', category: 'Speziell', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 126, name: 'Noisemeter', icon: '📏', tags: 'rauschen messen pegel', category: 'Speziell', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 127, name: 'Freqwave', icon: '📻', tags: 'frequenz welle audio', category: 'Speziell', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+
+    // === 128-137 ===
+    { id: 128, name: 'Freqmatrix', icon: '📻🟢', tags: 'frequenz matrix audio', category: 'Speziell', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 129, name: 'GEQ', icon: '📊', tags: 'equalizer grafik audio balken', category: 'Party', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 130, name: 'Waterfall', icon: '🏞️💧', tags: 'wasserfall fallen fliessen', category: 'Feuer/Wasser', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 131, name: 'Freqpixels', icon: '📻🟩', tags: 'frequenz pixel audio', category: 'Speziell', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 132, name: 'Noisefire', icon: '🔥📊', tags: 'rauschen feuer organisch', category: 'Feuer/Wasser', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 133, name: 'Puddlepeak', icon: '💧📈', tags: 'pfuetze spitze peak', category: 'Feuer/Wasser', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 134, name: 'Noisemove', icon: '📊🏃', tags: 'rauschen bewegen laufen', category: 'Speziell', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 135, name: 'Noise2D', icon: '📊📊', tags: 'rauschen zweidimensional', category: 'Speziell', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 136, name: 'Perlin Move', icon: '🌫️', tags: 'perlin rauschen bewegen organisch', category: 'Speziell', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 137, name: 'Ripple Peak', icon: '💧📈', tags: 'welle spitze peak audio', category: 'Feuer/Wasser', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+
+    // === 138-147 ===
+    { id: 138, name: 'Freqmap', icon: '📻🗺️', tags: 'frequenz karte audio', category: 'Speziell', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 139, name: 'Gravcenter', icon: '⚖️🎯', tags: 'schwerkraft zentrum mitte', category: 'Speziell', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 140, name: 'Gravcentric', icon: '⚖️🔄', tags: 'schwerkraft zentrisch rotation', category: 'Speziell', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 141, name: 'Gravfreq', icon: '⚖️📻', tags: 'schwerkraft frequenz audio', category: 'Speziell', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 142, name: 'DJ Light', icon: '🎧', tags: 'dj licht disco club party', category: 'Party', colors: 'palette', params: ['speed', 'palette'] },
+    { id: 143, name: 'Funky Plank', icon: '🪩', tags: 'funky party tanzen disco', category: 'Party', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 144, name: 'Blurz', icon: '🌫️', tags: 'verschwommen blur weich', category: 'Speziell', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 145, name: 'Drift', icon: '🍂', tags: 'treiben schweben drift', category: 'Lauflicht', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 146, name: 'Drift Rose', icon: '🌹', tags: 'treiben rose blume', category: 'Speziell', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 147, name: 'Distortion Waves', icon: '🌊💥', tags: 'verzerrung wellen verzerrt', category: 'Speziell', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+
+    // === 148-157 ===
+    { id: 148, name: 'Soap', icon: '🫧', tags: 'seife blasen schimmernd', category: 'Speziell', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 149, name: 'Tartan', icon: '🟥🟩', tags: 'tartan schottisch karo muster', category: 'Speziell', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 150, name: 'Octopus', icon: '🐙', tags: 'krake tentakel welle', category: 'Speziell', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 151, name: 'Waving Cell', icon: '🔬', tags: 'zelle welle organisch', category: 'Speziell', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 152, name: 'Scrolling Text', icon: '📝', tags: 'text schrift lauftext', category: 'Speziell', colors: 'single', params: ['speed', 'intensity', 'color'] },
+    { id: 153, name: 'DNA', icon: '🧬', tags: 'dna helix spirale biologie', category: 'Speziell', colors: 'palette', params: ['speed', 'palette'] },
+    { id: 154, name: 'DNA Spiral', icon: '🧬🌀', tags: 'dna spirale drehen', category: 'Speziell', colors: 'palette', params: ['speed', 'palette'] },
+    { id: 155, name: 'Black Hole', icon: '🕳️', tags: 'schwarzes loch saugen dunkel', category: 'Speziell', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 156, name: 'Wavesins', icon: '🌊📐', tags: 'wellen sinus mathematisch', category: 'Speziell', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 157, name: 'Rocktaves', icon: '🎸', tags: 'rock oktaven musik', category: 'Party', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+
+    // === 158-167 ===
+    { id: 158, name: 'Akemi', icon: '👧', tags: 'akemi anime figur', category: 'Speziell', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 159, name: 'Colored Bursts', icon: '💥🎨', tags: 'farbig burst explosion', category: 'Party', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 160, name: 'Game of Life', icon: '🦠', tags: 'spiel leben zellen simulation', category: 'Speziell', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 161, name: 'Julia', icon: '🌀', tags: 'julia fraktal mathematisch', category: 'Speziell', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 162, name: 'Lissajous', icon: '♾️', tags: 'lissajous figur mathematisch', category: 'Speziell', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 163, name: 'Frizzles', icon: '🌀💥', tags: 'kraeuseln wirbel', category: 'Speziell', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 164, name: 'Plasma Ball', icon: '🔮', tags: 'plasma kugel ball energie', category: 'Speziell', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 165, name: 'Flow Stripe', icon: '🌬️📏', tags: 'fliessen streifen stripe', category: 'Lauflicht', colors: 'palette', params: ['speed', 'palette'] },
+    { id: 166, name: 'Hip Noise', icon: '🎵📊', tags: 'hip rauschen modern', category: 'Speziell', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 167, name: 'Cometfire', icon: '☄️🔥', tags: 'komet feuer schweif brennen', category: 'Feuer/Wasser', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+
+    // === 168-177 ===
+    { id: 168, name: 'Chasing Comets', icon: '☄️☄️☄️', tags: 'jagend kometen mehrere schweif', category: 'Lauflicht', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 169, name: 'Fairy', icon: '🧚', tags: 'fee magie sanft funken', category: 'Funkeln', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 170, name: 'Fairy Twinkle', icon: '🧚✨', tags: 'fee funkeln magie', category: 'Funkeln', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 171, name: 'Running Lights', icon: '🏃💡', tags: 'lauflicht bewegen sanft sinus', category: 'Lauflicht', colors: 'single', params: ['speed', 'color'] },
+    { id: 172, name: 'Saw 2', icon: '🪚🪚', tags: 'saege welle doppel', category: 'Lauflicht', colors: 'palette', params: ['speed', 'palette'] },
+    { id: 173, name: 'Sparkle Palette', icon: '✨🎨', tags: 'funken palette bunt', category: 'Funkeln', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 174, name: 'Solid Rainbow', icon: '🌈⬛', tags: 'regenbogen einfarbig rotation', category: 'Regenbogen', colors: 'none', params: ['speed'] },
+    { id: 175, name: 'Sunrise 2', icon: '🌅🌅', tags: 'sonnenaufgang morgen langsam', category: 'Pulsierend', colors: 'palette', params: ['speed', 'palette'] },
+    { id: 176, name: 'Sparkle Duo', icon: '✨✨', tags: 'funken doppel zwei farben', category: 'Funkeln', colors: 'multi', params: ['speed', 'intensity', 'color'] },
+    { id: 177, name: 'Candle Duo', icon: '🕯️🕯️', tags: 'kerzen doppel zwei flammen', category: 'Feuer/Wasser', colors: 'multi', params: ['speed', 'color'] },
+
+    // === 178-186 ===
+    { id: 178, name: 'Defined Palette', icon: '🎨📋', tags: 'palette definiert fest', category: 'Basis', colors: 'palette', params: ['speed', 'palette'] },
+    { id: 179, name: 'Halloween Eyes', icon: '👀🎃', tags: 'halloween augen gruselig', category: 'Speziell', colors: 'multi', params: ['speed', 'intensity', 'color'] },
+    { id: 180, name: 'Starburst', icon: '💫', tags: 'stern burst explosion strahlen', category: 'Party', colors: 'multi', params: ['speed', 'intensity', 'color'] },
+    { id: 181, name: 'Glitter Rainbow', icon: '💎🌈', tags: 'glitzer regenbogen funken bunt', category: 'Funkeln', colors: 'none', params: ['speed', 'intensity'] },
+    { id: 182, name: 'Noel', icon: '🎄', tags: 'weihnachten noel festlich rot gruen', category: 'Weihnachten', colors: 'multi', params: ['speed', 'color'] },
+    { id: 183, name: 'Marquee', icon: '💡💡💡', tags: 'laufschrift marquee licht theater', category: 'Lauflicht', colors: 'multi', params: ['speed', 'color'] },
+    { id: 184, name: 'Sine Phase', icon: '📐🌀', tags: 'sinus phase welle', category: 'Pulsierend', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 185, name: 'Twirl', icon: '🌀', tags: 'wirbel drehen spirale', category: 'Lauflicht', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
+    { id: 186, name: 'Rain Sparkle', icon: '🌧️✨', tags: 'regen funken tropfen', category: 'Feuer/Wasser', colors: 'palette', params: ['speed', 'intensity', 'palette'] },
   ];
 
   // Effekt-Parameter-Metadaten: welche Regler sind relevant?
-  // c=Color, s=Speed, i=Intensity, p=Palette
-  const EFFECT_PARAMS = {
-    0: 'c',        // Solid: nur Farbe
-    1: 'csi',      // Blink
-    2: 'cs',       // Breathe: Farbe + Speed
-    3: 'cs',       // Wipe
-    6: 'cs',       // Sweep
-    8: 's',        // Colorloop: nur Speed (Farben rotieren)
-    9: 'sp',       // Rainbow: Speed + Palette
-    10: 'cs',      // Scan
-    13: 'cs',      // Theater
-    17: 'si',      // Twinkle: Speed + Intensity (Anzahl)
-    20: 'csi',     // Sparkle
-    21: 'ci',      // Sparkle Dark
-    23: 'cs',      // Strobe
-    25: 'cs',      // Strobe Mega
-    28: 'csi',     // Chase
-    37: 'cs',      // Running 2
-    40: 'cs',      // Scanner
-    41: 'cs',      // Lighthouse
-    57: 'si',      // Lightning: Speed + Intensity
-    63: 'sp',      // Pride: Speed + Palette
-    65: 'sp',      // Palette: Speed + Palette
-    66: 'si',      // Fire: Speed + Intensity
-    67: 'sp',      // Colorwaves
-    68: 'sp',      // BPM
-    74: 'sip',     // Colortwinkles
-    75: 'sp',      // Lake
-    76: 'cs',      // Meteor
-    77: 'cs',      // Meteor Smooth
-    79: 'csi',     // Ripple
-    80: 'sip',     // Twinklefox: Speed+Intensity+Palette (KEINE Farbe)
-    81: 'sip',     // Twinklecat
-    83: 'csi',     // Solid Pattern
-    87: 'sp',      // Glitter
-    88: 'c',       // Candle: nur Farbe
-    91: 'csi',     // Bouncing Balls
-    97: 'sp',      // Plasma
-    98: 'ci',      // Percent
-    100: 'cs',     // Heartbeat
-    101: 'sp',     // Pacifica
-    103: 'ci',     // Solid Glitter
-    104: 'cs',     // Sunrise
-  };
+  // Direkt aus WLED_EFFECTS.params abgeleitet
+  function getEffectParamsFromList(effectId) {
+    const effect = WLED_EFFECTS.find(e => e.id === effectId);
+    if (!effect) return { hasColor: true, hasSpeed: true, hasIntensity: true, hasPalette: true };
+    const p = effect.params;
+    return {
+      hasColor: p.includes('color'),
+      hasSpeed: p.includes('speed'),
+      hasIntensity: p.includes('intensity'),
+      hasPalette: p.includes('palette'),
+    };
+  }
+
+  // Legacy-Alias: EFFECT_PARAMS bleibt kompatibel
+  const EFFECT_PARAMS = {};
+  WLED_EFFECTS.forEach(e => {
+    let code = '';
+    if (e.params.includes('color')) code += 'c';
+    if (e.params.includes('speed')) code += 's';
+    if (e.params.includes('intensity')) code += 'i';
+    if (e.params.includes('palette')) code += 'p';
+    EFFECT_PARAMS[e.id] = code || 'c';
+  });
 
   function getEffectParams(effectId) {
-    const params = EFFECT_PARAMS[effectId] || 'csip'; // Default: alles zeigen
-    return {
-      hasColor: params.includes('c'),
-      hasSpeed: params.includes('s'),
-      hasIntensity: params.includes('i'),
-      hasPalette: params.includes('p'),
-    };
+    return getEffectParamsFromList(effectId);
   }
 
   // Effekte nach Kategorie gruppiert (für Dropdown)
@@ -2689,6 +3290,199 @@ hr {
       groups[e.category].push(e);
     });
     return groups;
+  }
+
+  // ==========================================================================
+  // Effect Browser — Smart Search & Filter Logic
+  // ==========================================================================
+
+  // ==========================================================================
+  // Effect Card Preview Animation
+  // Single shared simulator + rAF, throttled to ~30fps
+  // ==========================================================================
+
+  let _previewRaf = null;
+  let _previewSim = null;
+  let _previewCanvas = null;
+  let _previewCtx = null;
+  let _previewEffectId = -1;
+  let _previewLastFrame = 0;
+
+  function startEffectPreview(card, effectId) {
+    stopEffectPreview();
+
+    const canvas = card.querySelector('.effect-card-preview');
+    if (!canvas) return;
+
+    _previewCanvas = canvas;
+    _previewCtx = canvas.getContext('2d');
+    _previewEffectId = effectId;
+    _previewSim = new EffectSimulator(20);
+    _previewLastFrame = 0;
+
+    function animate(ts) {
+      if (ts - _previewLastFrame < 33) {
+        _previewRaf = requestAnimationFrame(animate);
+        return;
+      }
+      _previewLastFrame = ts;
+
+      const pixels = _previewSim.render(_previewEffectId, 128, 128, [255, 128, 0, 0]);
+      const w = _previewCanvas.width / 20;
+      const h = _previewCanvas.height;
+      for (let i = 0; i < pixels.length; i++) {
+        const px = pixels[i];
+        _previewCtx.fillStyle = `rgb(${px[0]},${px[1]},${px[2]})`;
+        _previewCtx.fillRect(i * w, 0, w, h);
+      }
+      _previewRaf = requestAnimationFrame(animate);
+    }
+    _previewRaf = requestAnimationFrame(animate);
+  }
+
+  function stopEffectPreview() {
+    if (_previewRaf) {
+      cancelAnimationFrame(_previewRaf);
+      _previewRaf = null;
+    }
+    _previewSim = null;
+    _previewCanvas = null;
+    _previewCtx = null;
+    _previewEffectId = -1;
+  }
+
+  function wireEffectBrowser(browser, action, stripContainer) {
+    const toggleBtn = browser.querySelector('.effect-browser-toggle');
+    const panel = browser.querySelector('.effect-browser-panel');
+    const searchInput = browser.querySelector('.effect-search-input');
+    const currentLabel = browser.querySelector('.effect-browser-current');
+    const cards = browser.querySelectorAll('.effect-card');
+    const catBtns = browser.querySelectorAll('.effect-cat-btn');
+    const colorBtns = browser.querySelectorAll('.effect-color-btn');
+    const alphaBtns = browser.querySelectorAll('.effect-alpha-btn');
+
+    let activeCat = 'Alle';
+    let activeColors = 'all';
+    let activeLetter = 'all';
+    let searchTerm = '';
+
+    // Toggle panel open/close
+    toggleBtn.addEventListener('click', () => {
+      panel.hidden = !panel.hidden;
+      if (!panel.hidden) {
+        searchInput.focus();
+        // Scroll selected card into view
+        const sel = panel.querySelector('.effect-card.selected');
+        if (sel) sel.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    });
+
+    function applyFilters() {
+      const term = searchTerm.toLowerCase();
+      cards.forEach(card => {
+        const name = card.dataset.name;
+        const tags = card.dataset.tags;
+        const cat = card.dataset.cat;
+        const colors = card.dataset.colors;
+        const firstLetter = name.charAt(0).toUpperCase();
+
+        let visible = true;
+
+        // Text search: match name OR tags
+        if (term && !name.includes(term) && !tags.includes(term)) {
+          visible = false;
+        }
+
+        // Category filter
+        if (activeCat !== 'Alle' && cat !== activeCat) {
+          visible = false;
+        }
+
+        // Color type filter
+        if (activeColors !== 'all' && colors !== activeColors) {
+          visible = false;
+        }
+
+        // Letter filter
+        if (activeLetter !== 'all' && firstLetter !== activeLetter) {
+          visible = false;
+        }
+
+        card.hidden = !visible;
+      });
+    }
+
+    // Search input
+    searchInput.addEventListener('input', () => {
+      searchTerm = searchInput.value;
+      applyFilters();
+    });
+
+    // Category buttons
+    catBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        catBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeCat = btn.dataset.cat;
+        applyFilters();
+      });
+    });
+
+    // Color filter buttons
+    colorBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        colorBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeColors = btn.dataset.colors;
+        applyFilters();
+      });
+    });
+
+    // Alphabet buttons
+    alphaBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        alphaBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeLetter = btn.dataset.letter;
+        applyFilters();
+      });
+    });
+
+    // Card selection
+    cards.forEach(card => {
+      card.addEventListener('click', () => {
+        const newId = parseInt(card.dataset.id, 10);
+        const wasSelected = card.classList.contains('selected');
+        action.effectId = newId;
+
+        // Update selected state
+        cards.forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+
+        // Start/stop animated preview on selected card
+        if (!wasSelected) {
+          startEffectPreview(card, newId);
+        }
+
+        // Update label
+        const eff = WLED_EFFECTS.find(e => e.id === newId);
+        if (eff) currentLabel.textContent = `${eff.icon} ${eff.name}`;
+
+        // Update parameter controls visibility
+        const ep = getEffectParams(newId);
+        const speedRow = stripContainer.querySelector('.effect-speed-row');
+        const intRow = stripContainer.querySelector('.effect-intensity-row');
+        const colorRow = stripContainer.querySelector('.effect-color-row');
+        if (speedRow) speedRow.hidden = !ep.hasSpeed;
+        if (intRow) intRow.hidden = !ep.hasIntensity;
+        if (colorRow) colorRow.hidden = !ep.hasColor;
+      });
+    });
+
+    // Stop preview when panel is closed
+    toggleBtn.addEventListener('click', () => {
+      if (panel.hidden) stopEffectPreview();
+    });
   }
 
   // Brightness scaling: WLED uses 0-255, our config uses 0-100
@@ -4722,30 +5516,54 @@ hr {
           <button class="btn btn-secondary load-presets-btn" data-cube="${cube.id}" type="button" style="font-size:12px">Von Cube laden</button>
         </div>
         <div class="mode-effect-controls" ${action.mode === 'effect' ? '' : 'hidden'}>
-          <div class="form-row">
-            <label>Effekt</label>
-            <select class="strip-effect-select">
-              ${Object.entries(getEffectsByCategory()).map(([cat, effects]) =>
-                `<optgroup label="${cat}">${effects.map(e => {
-                  const p = getEffectParams(e.id);
-                  const tags = [p.hasColor ? '🎨' : '', p.hasSpeed ? '⏩' : '', p.hasIntensity ? '💡' : '', p.hasPalette ? '🎭' : ''].filter(Boolean).join('');
-                  return `<option value="${e.id}" ${(action.effectId || 0) === e.id ? 'selected' : ''}>${e.name} — ${e.desc} ${tags}</option>`;
-                }).join('')}</optgroup>`
-              ).join('')}
-            </select>
+          <div class="effect-browser" data-cube="${cube.id}" data-strip="${strip.id}">
+            <div class="effect-browser-selected">
+              <span class="effect-browser-current">${(() => { const eff = WLED_EFFECTS.find(e => e.id === (action.effectId || 0)); return eff ? `${eff.icon} ${eff.name}` : '-- Effekt wählen --'; })()}</span>
+              <button type="button" class="btn btn-secondary effect-browser-toggle">Effekt wählen</button>
+            </div>
+            <div class="effect-browser-panel" hidden>
+              <div class="effect-browser-search">
+                <input type="search" placeholder="Suche (Name oder deutsch, z.B. funkel, feuer, regenbogen...)" class="effect-search-input">
+              </div>
+              <div class="effect-browser-filters">
+                <div class="effect-category-row">
+                  ${EFFECT_CATEGORIES.map(cat =>
+                    `<button type="button" class="effect-cat-btn${cat === 'Alle' ? ' active' : ''}" data-cat="${cat}">${cat}</button>`
+                  ).join('')}
+                </div>
+                <div class="effect-color-filter">
+                  <button type="button" class="effect-color-btn active" data-colors="all">Alle</button>
+                  <button type="button" class="effect-color-btn" data-colors="single">1 Farbe</button>
+                  <button type="button" class="effect-color-btn" data-colors="multi">Multi</button>
+                  <button type="button" class="effect-color-btn" data-colors="palette">Palette</button>
+                  <button type="button" class="effect-color-btn" data-colors="none">Farblos</button>
+                </div>
+                <div class="effect-alpha-row">
+                  ${'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(l =>
+                    `<button type="button" class="effect-alpha-btn" data-letter="${l}">${l}</button>`
+                  ).join('')}
+                  <button type="button" class="effect-alpha-btn active" data-letter="all">*</button>
+                </div>
+              </div>
+              <div class="effect-browser-grid">
+                ${WLED_EFFECTS.map(e =>
+                  `<button type="button" class="effect-card${(action.effectId || 0) === e.id ? ' selected' : ''}" data-id="${e.id}" data-name="${e.name.toLowerCase()}" data-tags="${e.tags}" data-cat="${e.category}" data-colors="${e.colors}"><span class="effect-card-icon">${e.icon}</span><span class="effect-card-name">${e.name}</span><canvas class="effect-card-preview" width="120" height="16"></canvas></button>`
+                ).join('')}
+              </div>
+            </div>
           </div>
           ${(() => { const ep = getEffectParams(action.effectId || 0); return `
-          <div class="form-row" ${ep.hasSpeed ? '' : 'hidden'}>
+          <div class="form-row effect-speed-row" ${ep.hasSpeed ? '' : 'hidden'}>
             <label>Speed</label>
             <input type="range" min="0" max="255" step="1" value="${action.speed != null ? action.speed : 128}" class="strip-effect-speed">
             <input type="number" min="0" max="255" class="value-input strip-effect-speed-input" value="${action.speed != null ? action.speed : 128}">
           </div>
-          <div class="form-row" ${ep.hasIntensity ? '' : 'hidden'}>
+          <div class="form-row effect-intensity-row" ${ep.hasIntensity ? '' : 'hidden'}>
             <label>Intensität</label>
             <input type="range" min="0" max="255" step="1" value="${action.intensity != null ? action.intensity : 128}" class="strip-effect-intensity">
             <input type="number" min="0" max="255" class="value-input strip-effect-intensity-input" value="${action.intensity != null ? action.intensity : 128}">
           </div>
-          <div class="form-row" ${ep.hasColor ? '' : 'hidden'}>
+          <div class="form-row effect-color-row" ${ep.hasColor ? '' : 'hidden'}>
             <label>Basisfarbe</label>
             <input type="color" value="${rgbwHex}" class="strip-effect-color">
           </div>
@@ -4845,22 +5663,10 @@ hr {
       });
     }
 
-    // Effekt-Controls
-    const effectSelect = container.querySelector('.strip-effect-select');
-    if (effectSelect) {
-      effectSelect.addEventListener('change', () => {
-        action.effectId = parseInt(effectSelect.value, 10);
-        // Controls basierend auf Effekt-Metadaten ein-/ausblenden
-        const ep = getEffectParams(action.effectId);
-        const effControls = container.querySelector('.mode-effect-controls');
-        if (effControls) {
-          const rows = effControls.querySelectorAll('.form-row');
-          // rows[0] = Effekt-Dropdown (immer sichtbar)
-          if (rows[1]) rows[1].hidden = !ep.hasSpeed;
-          if (rows[2]) rows[2].hidden = !ep.hasIntensity;
-          if (rows[3]) rows[3].hidden = !ep.hasColor;
-        }
-      });
+    // Effekt-Browser Controls
+    const effectBrowser = container.querySelector('.effect-browser');
+    if (effectBrowser) {
+      wireEffectBrowser(effectBrowser, action, container);
     }
 
     const speedSlider = container.querySelector('.strip-effect-speed');
