@@ -2068,7 +2068,7 @@ hr {
     </div>
 
     <div class="topbar-actions">
-      <span class="build-info" id="build-info">V3.1 · Build 2026-04-12 20:09</span>
+      <span class="build-info" id="build-info">V3.1 · Build 2026-04-12 20:14</span>
       <button id="shortcuts-help-btn" class="btn btn-icon" type="button" title="Tastatur-Shortcuts" style="font-size:18px;color:var(--text-secondary)">?</button>
       <button id="mode-toggle-btn" class="mode-toggle-btn" type="button">
         <span id="mode-toggle-label">Show ▶</span>
@@ -5658,6 +5658,7 @@ hr {
       colorPicker.addEventListener('input', () => {
         action.rgbw = hexToRgbw(colorPicker.value, action.rgbw ? action.rgbw[3] : 0);
       });
+      colorPicker.addEventListener('change', () => { colorPicker.blur(); });
     }
 
     const whiteSlider = container.querySelector('.strip-white');
@@ -5742,6 +5743,7 @@ hr {
       effectColor.addEventListener('input', () => {
         action.rgbw = hexToRgbw(effectColor.value, 0);
       });
+      effectColor.addEventListener('change', () => { effectColor.blur(); });
     }
 
     const copyBtn = container.querySelector('.copy-strip0-btn');
