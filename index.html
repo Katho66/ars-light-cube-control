@@ -1975,6 +1975,12 @@ hr {
   font-weight: 600;
 }
 
+.effect-browser-footer {
+  padding: 8px;
+  text-align: right;
+  border-top: 1px solid var(--border-default);
+}
+
 .effect-card-preview {
   display: none;
   width: 100%;
@@ -2062,7 +2068,7 @@ hr {
     </div>
 
     <div class="topbar-actions">
-      <span class="build-info" id="build-info">V3.1 · Build 2026-04-12 20:00</span>
+      <span class="build-info" id="build-info">V3.1 · Build 2026-04-12 20:07</span>
       <button id="shortcuts-help-btn" class="btn btn-icon" type="button" title="Tastatur-Shortcuts" style="font-size:18px;color:var(--text-secondary)">?</button>
       <button id="mode-toggle-btn" class="mode-toggle-btn" type="button">
         <span id="mode-toggle-label">Show ▶</span>
@@ -3482,7 +3488,16 @@ hr {
       });
     });
 
-    // Stop preview when panel is closed
+    // Apply button closes panel
+    const applyBtn = browser.querySelector('.effect-apply-btn');
+    if (applyBtn) {
+      applyBtn.addEventListener('click', () => {
+        panel.hidden = true;
+        stopEffectPreview();
+      });
+    }
+
+    // Stop preview when panel is closed via toggle
     toggleBtn.addEventListener('click', () => {
       if (panel.hidden) stopEffectPreview();
     });
@@ -5565,6 +5580,9 @@ hr {
                 ${WLED_EFFECTS.map(e =>
                   `<button type="button" class="effect-card${(action.effectId || 0) === e.id ? ' selected' : ''}" data-id="${e.id}" data-name="${e.name.toLowerCase()}" data-tags="${e.tags}" data-cat="${e.category}" data-colors="${e.colors}"><span class="effect-card-icon">${e.icon}</span><span class="effect-card-name">${e.name}</span><canvas class="effect-card-preview" width="120" height="16"></canvas></button>`
                 ).join('')}
+              </div>
+              <div class="effect-browser-footer">
+                <button type="button" class="btn btn-primary effect-apply-btn">Effekt übernehmen</button>
               </div>
             </div>
           </div>
