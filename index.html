@@ -216,6 +216,35 @@ hr {
   50% { background: var(--accent-emergency-hover); }
 }
 
+.reconnect-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--touch-min);
+  height: var(--touch-min);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border-radius: var(--radius-md);
+  font-size: 20px;
+  transition: all var(--transition-fast);
+  touch-action: manipulation;
+}
+
+.reconnect-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.reconnect-btn.checking {
+  animation: spin 1s linear infinite;
+  color: var(--accent-info);
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 .show-info {
   flex: 1;
   display: flex;
@@ -2056,6 +2085,9 @@ hr {
     <button id="emergency-btn" class="emergency-btn" type="button" aria-label="Notfall auslösen">
       <span class="emergency-icon">⚠</span>
       <span class="emergency-label">NOTFALL</span>
+    </button>
+    <button id="reconnect-btn" class="reconnect-btn" type="button" aria-label="Cubes prüfen" title="Alle Cubes prüfen">
+      <span class="reconnect-icon">⟳</span>
     </button>
 
     <div class="show-info">
@@ -6507,6 +6539,20 @@ hr {
 
     // Emergency
     document.getElementById('emergency-btn').addEventListener('click', triggerEmergency);
+
+    // Reconnect — check all cubes
+    document.getElementById('reconnect-btn').addEventListener('click', async () => {
+      const btn = document.getElementById('reconnect-btn');
+      btn.classList.add('checking');
+      let onlineCount = 0;
+      for (const cube of state.cubes) {
+        const info = await fetchCubeInfo(cube);
+        if (info) onlineCount++;
+      }
+      renderCubeStatus();
+      btn.classList.remove('checking');
+      toast(`${onlineCount}/${state.cubes.length} Cubes online`, onlineCount === state.cubes.length ? 'success' : 'warning');
+    });
 
     // Edit-mode tabs
     document.querySelectorAll('.tab-btn').forEach(btn => {
