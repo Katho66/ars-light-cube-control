@@ -2068,7 +2068,7 @@ hr {
     </div>
 
     <div class="topbar-actions">
-      <span class="build-info" id="build-info">V3.1 · Build 2026-04-12 20:07</span>
+      <span class="build-info" id="build-info">V3.1 · Build 2026-04-12 20:09</span>
       <button id="shortcuts-help-btn" class="btn btn-icon" type="button" title="Tastatur-Shortcuts" style="font-size:18px;color:var(--text-secondary)">?</button>
       <button id="mode-toggle-btn" class="mode-toggle-btn" type="button">
         <span id="mode-toggle-label">Show ▶</span>
@@ -3457,7 +3457,7 @@ hr {
       });
     });
 
-    // Card selection
+    // Card selection — single tap selects, double tap confirms & closes
     cards.forEach(card => {
       card.addEventListener('click', () => {
         const newId = parseInt(card.dataset.id, 10);
@@ -3471,6 +3471,10 @@ hr {
         // Start/stop animated preview on selected card
         if (!wasSelected) {
           startEffectPreview(card, newId);
+        } else {
+          // Double tap on already selected card → confirm & close
+          panel.hidden = true;
+          stopEffectPreview();
         }
 
         // Update label
@@ -5576,13 +5580,13 @@ hr {
                   <button type="button" class="effect-alpha-btn active" data-letter="all">*</button>
                 </div>
               </div>
+              <div class="effect-browser-footer">
+                <button type="button" class="btn btn-primary effect-apply-btn">Effekt übernehmen</button>
+              </div>
               <div class="effect-browser-grid">
                 ${WLED_EFFECTS.map(e =>
                   `<button type="button" class="effect-card${(action.effectId || 0) === e.id ? ' selected' : ''}" data-id="${e.id}" data-name="${e.name.toLowerCase()}" data-tags="${e.tags}" data-cat="${e.category}" data-colors="${e.colors}"><span class="effect-card-icon">${e.icon}</span><span class="effect-card-name">${e.name}</span><canvas class="effect-card-preview" width="120" height="16"></canvas></button>`
                 ).join('')}
-              </div>
-              <div class="effect-browser-footer">
-                <button type="button" class="btn btn-primary effect-apply-btn">Effekt übernehmen</button>
               </div>
             </div>
           </div>
