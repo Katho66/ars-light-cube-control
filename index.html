@@ -2269,6 +2269,18 @@ hr {
       </fieldset>
 
       <fieldset class="settings-group">
+        <legend>Companion Integration</legend>
+        <label class="settings-row checkbox">
+          <input type="checkbox" id="setting-companion-enabled">
+          <span>Companion-Anbindung aktiv</span>
+        </label>
+        <label class="settings-row">
+          <span>Companion Host</span>
+          <input type="text" id="setting-companion-host" placeholder="http://127.0.0.1:8000" style="width:220px">
+        </label>
+      </fieldset>
+
+      <fieldset class="settings-group">
         <legend>Daten</legend>
         <p class="hint" id="snapshot-info">Letzte Snapshots: 0 verfügbar</p>
         <div class="button-row">
@@ -2362,6 +2374,11 @@ hr {
         <div class="form-row">
           <label>Fade-Zeit (ms)</label>
           <input type="number" id="cue-editor-fade" min="0" max="10000" step="50">
+        </div>
+        <div class="form-row">
+          <label>Auto-Weiter (Sek.)</label>
+          <input type="number" id="cue-editor-auto-advance" min="0" max="3600" step="0.5" value="0">
+          <span class="hint" style="margin-left:8px;font-size:11px;color:var(--text-muted)">0 = wartet auf GO</span>
         </div>
         <hr>
         <h4>Aktionen pro Cube</h4>
@@ -3590,6 +3607,8 @@ hr {
         quickButtonSlots: 8,
         requestTimeoutMs: DEFAULT_REQUEST_TIMEOUT_MS,
         reconnectPollMs: DEFAULT_RECONNECT_POLL_MS,
+        companionEnabled: false,
+        companionHost: 'http://127.0.0.1:8000',
       },
       snapshots: [],
     };
@@ -3608,7 +3627,7 @@ hr {
         actions.push(action);
       }
     }
-    return { id, name, description, fadeTime, actions };
+    return { id, name, description, fadeTime, autoAdvance: 0, actions };
   }
 
   // ==========================================================================
@@ -3635,6 +3654,9 @@ hr {
     pendingEscConfirm: false,
     escConfirmTimeout: null,
     quickButtonActive: {},
+    companionPollInterval: null,
+    autoAdvanceTimeout: null,
+    autoAdvanceEnd: null,  // timestamp when auto-advance fires
     previewAnimating: false,
     previewAnimationFrame: null,
     previewPopoutWindow: null,
@@ -3685,6 +3707,10 @@ hr {
           console.log(`Migration: Cue '${rc.name}' ergänzt`);
         }
       });
+
+      // Migration: Companion settings
+      if (state.settings.companionEnabled === undefined) state.settings.companionEnabled = false;
+      if (!state.settings.companionHost) state.settings.companionHost = 'http://127.0.0.1:8000';
 
       // Migration: Bestehende Cues um fehlende Strip-1-Aktionen ergänzen
       state.library.forEach(cue => {
@@ -4779,6 +4805,8 @@ hr {
     document.getElementById('setting-request-timeout').value = s.requestTimeoutMs;
     document.getElementById('setting-reconnect-poll').value = s.reconnectPollMs;
     document.getElementById('setting-demo-mode').checked = s.demoMode;
+    document.getElementById('setting-companion-enabled').checked = s.companionEnabled || false;
+    document.getElementById('setting-companion-host').value = s.companionHost || 'http://127.0.0.1:8000';
     document.getElementById('snapshot-info').textContent = `Letzte Snapshots: ${state.snapshots.length} verfügbar`;
   }
 
@@ -4920,7 +4948,7 @@ hr {
         }).join('')}
       </div>
       <div class="current-detail">${escapeHtml(detail)}</div>
-      <div class="current-fade">Fade: ${cue.fadeTime || 0} ms</div>
+      <div class="current-fade">Fade: ${cue.fadeTime || 0} ms${cue.autoAdvance > 0 ? ` · Auto-Weiter: ${cue.autoAdvance}s` : ''}</div>
       ${entry.note ? `<div class="current-note">${escapeHtml(entry.note)}</div>` : ''}
       <div class="current-actions">
         <button class="btn btn-prev" id="current-prev-btn">◀ Prev</button>
@@ -5044,6 +5072,8 @@ hr {
     _goNextLock = true;
     setTimeout(() => { _goNextLock = false; }, 300); // 300ms Sperre
 
+    cancelAutoAdvance();
+
     if (state.playlist.length === 0) return;
 
     // Pointer ZUERST weiterbewegen, DANN feuern
@@ -5080,28 +5110,38 @@ hr {
       toast(`✓ ${cue.name}`, 'success');
     }
 
+    // Auto-Advance starten falls Cue es definiert
+    startAutoAdvance(cue);
+
+    // Companion Push
+    pushToCompanion();
+
     // Mitte zeigt jetzt den AKTIVEN (gerade gefeuerten) Cue
     renderShowColumns();
     renderShowPreview();
   }
 
   async function goPrev() {
+    cancelAutoAdvance();
     if (runtime.playlistPointer > 0) {
       runtime.playlistPointer--;
       const entry = state.playlist[runtime.playlistPointer];
       const cue = state.library.find(c => c.id === entry.libraryId);
       if (cue) await fireCue(cue); // Vorherigen Cue auch feuern
+      pushToCompanion();
       renderShowColumns();
       renderShowPreview();
     } else if (runtime.playlistPointer === 0) {
       // Zurück zum "Bereit"-Zustand
       runtime.playlistPointer = -1;
+      pushToCompanion();
       renderShowColumns();
       renderShowPreview();
     }
   }
 
   async function refireCurrent() {
+    cancelAutoAdvance();
     const entry = state.playlist[runtime.playlistPointer];
     if (!entry) return;
     const cue = state.library.find(c => c.id === entry.libraryId);
@@ -5109,9 +5149,12 @@ hr {
     await fireCue(cue);
     runtime.cueStartTime = Date.now();
     startCueTimer();
+    startAutoAdvance(cue);
+    pushToCompanion();
   }
 
   async function jumpToCue(idx, withFade) {
+    cancelAutoAdvance();
     if (idx < 0 || idx >= state.playlist.length) return;
     const entry = state.playlist[idx];
     const cue = state.library.find(c => c.id === entry.libraryId);
@@ -5123,6 +5166,9 @@ hr {
 
     const fadeMs = withFade ? state.settings.jumpFadeMs : 0;
     await fireCue(cue, fadeMs);
+
+    startAutoAdvance(cue);
+    pushToCompanion();
 
     renderShowColumns();
     renderShowPreview();
@@ -5237,8 +5283,16 @@ hr {
     runtime.cueTimerInterval = setInterval(() => {
       const el = document.getElementById('cue-timer');
       if (el && !el.hidden) {
-        el.textContent = `Cue ${formatDuration(Date.now() - runtime.cueStartTime)}`;
+        if (runtime.autoAdvanceEnd) {
+          const remaining = Math.max(0, runtime.autoAdvanceEnd - Date.now());
+          const secs = Math.ceil(remaining / 1000);
+          el.textContent = `Cue \u2193 ${secs}s`;
+        } else {
+          el.textContent = `Cue ${formatDuration(Date.now() - runtime.cueStartTime)}`;
+        }
       }
+      // Push timer to Companion every second
+      pushToCompanion();
     }, 1000);
   }
 
@@ -5248,6 +5302,92 @@ hr {
     const mins = Math.floor((total % 3600) / 60);
     const secs = total % 60;
     return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  }
+
+  // ==========================================================================
+  // Companion Integration (bidirectional HTTP)
+  // ==========================================================================
+
+  function formatCueTimer() {
+    if (runtime.autoAdvanceEnd) {
+      const remaining = Math.max(0, runtime.autoAdvanceEnd - Date.now());
+      const secs = Math.ceil(remaining / 1000);
+      return '\u2193 ' + secs + 's';
+    }
+    if (runtime.cueStartTime) {
+      return formatDuration(Date.now() - runtime.cueStartTime);
+    }
+    return '--:--:--';
+  }
+
+  function pushToCompanion() {
+    if (!state.settings.companionEnabled) return;
+    const host = state.settings.companionHost || 'http://127.0.0.1:8000';
+    const cueNum = runtime.playlistPointer + 1;
+    const entry = state.playlist[runtime.playlistPointer];
+    const cue = entry ? state.library.find(c => c.id === entry.libraryId) : null;
+    const cueName = cue ? cue.name : (runtime.playlistPointer < 0 ? 'Bereit' : 'Ende');
+
+    fetch(`${host}/api/custom-variable/cubeNum/value?value=${encodeURIComponent(cueNum)}`, { method: 'POST', mode: 'no-cors' }).catch(() => {});
+    fetch(`${host}/api/custom-variable/cubeName/value?value=${encodeURIComponent(cueName)}`, { method: 'POST', mode: 'no-cors' }).catch(() => {});
+    fetch(`${host}/api/custom-variable/cubeTimer/value?value=${encodeURIComponent(formatCueTimer())}`, { method: 'POST', mode: 'no-cors' }).catch(() => {});
+  }
+
+  function startCompanionPolling() {
+    if (!state.settings.companionEnabled) return;
+    if (runtime.companionPollInterval) clearInterval(runtime.companionPollInterval);
+
+    const host = state.settings.companionHost || 'http://127.0.0.1:8000';
+
+    runtime.companionPollInterval = setInterval(async () => {
+      try {
+        const resp = await fetch(`${host}/api/custom-variable/cubeAction/value`);
+        if (resp.ok) {
+          const action = await resp.text();
+          if (action && action !== 'none' && action !== '"none"') {
+            fetch(`${host}/api/custom-variable/cubeAction/value?value=none`, { method: 'POST', mode: 'no-cors' }).catch(() => {});
+
+            const clean = action.replace(/"/g, '');
+            if (clean === 'go') goNext();
+            else if (clean === 'prev') goPrev();
+            else if (clean === 'refresh') refireCurrent();
+            else if (clean === 'blackout') triggerEmergency();
+          }
+        }
+      } catch (e) {
+        // Companion not running, ignore silently
+      }
+    }, 200);
+  }
+
+  function stopCompanionPolling() {
+    if (runtime.companionPollInterval) {
+      clearInterval(runtime.companionPollInterval);
+      runtime.companionPollInterval = null;
+    }
+  }
+
+  // ==========================================================================
+  // Auto-Advance
+  // ==========================================================================
+
+  function cancelAutoAdvance() {
+    if (runtime.autoAdvanceTimeout) {
+      clearTimeout(runtime.autoAdvanceTimeout);
+      runtime.autoAdvanceTimeout = null;
+    }
+    runtime.autoAdvanceEnd = null;
+  }
+
+  function startAutoAdvance(cue) {
+    cancelAutoAdvance();
+    if (!cue || !cue.autoAdvance || cue.autoAdvance <= 0) return;
+    runtime.autoAdvanceEnd = Date.now() + cue.autoAdvance * 1000;
+    runtime.autoAdvanceTimeout = setTimeout(() => {
+      runtime.autoAdvanceTimeout = null;
+      runtime.autoAdvanceEnd = null;
+      goNext();
+    }, cue.autoAdvance * 1000);
   }
 
   // ==========================================================================
@@ -5324,6 +5464,7 @@ hr {
     document.getElementById('cue-editor-name').value = cue.name;
     document.getElementById('cue-editor-description').value = cue.description || '';
     document.getElementById('cue-editor-fade').value = cue.fadeTime || 0;
+    document.getElementById('cue-editor-auto-advance').value = cue.autoAdvance || 0;
 
     renderCueEditorActions(cue);
 
@@ -5376,6 +5517,7 @@ hr {
       name: 'Neuer Cue',
       description: '',
       fadeTime: 500,
+      autoAdvance: 0,
       actions: state.cubes.flatMap(c =>
         c.strips.map(s => ({ cubeId: c.id, stripId: s.id, mode: 'off' }))
       ),
@@ -5820,6 +5962,7 @@ hr {
     cue.name = newName;
     cue.description = document.getElementById('cue-editor-description').value;
     cue.fadeTime = parseInt(document.getElementById('cue-editor-fade').value, 10) || 0;
+    cue.autoAdvance = parseFloat(document.getElementById('cue-editor-auto-advance').value) || 0;
 
     saveState();
     closeCueEditor();
@@ -5854,6 +5997,7 @@ hr {
     newCue.name = newName;
     newCue.description = document.getElementById('cue-editor-description').value;
     newCue.fadeTime = parseInt(document.getElementById('cue-editor-fade').value, 10) || 0;
+    newCue.autoAdvance = parseFloat(document.getElementById('cue-editor-auto-advance').value) || 0;
 
     state.library.push(newCue);
     saveState();
@@ -6214,6 +6358,7 @@ hr {
         sameCues.forEach(c => {
           c.actions = JSON.parse(JSON.stringify(editedCue.actions));
           c.fadeTime = editedCue.fadeTime;
+          c.autoAdvance = editedCue.autoAdvance;
         });
         saveState();
         closeLiveEdit();
@@ -6271,6 +6416,7 @@ hr {
   function switchMode() {
     if (runtime.mode === 'edit') {
       runtime.mode = 'show';
+      startCompanionPolling();
     } else {
       // Confirm if cue is running
       if (runtime.cueStartTime) {
@@ -6299,6 +6445,8 @@ hr {
       clearInterval(runtime.cueTimerInterval);
       runtime.cueTimerInterval = null;
     }
+    cancelAutoAdvance();
+    stopCompanionPolling();
     runtime.showStartTime = null;
     runtime.cueStartTime = null;
     runtime.playlistPointer = -1; // Show zurücksetzen auf "Bereit"
@@ -6600,6 +6748,11 @@ hr {
       'setting-request-timeout': v => { state.settings.requestTimeoutMs = parseInt(v, 10) || 1500; },
       'setting-reconnect-poll': v => { state.settings.reconnectPollMs = parseInt(v, 10) || 5000; startReconnectPolling(); },
       'setting-demo-mode': v => { state.settings.demoMode = v; renderTopBar(); },
+      'setting-companion-enabled': v => {
+        state.settings.companionEnabled = v;
+        if (v) startCompanionPolling();
+        else stopCompanionPolling();
+      },
     };
     Object.entries(settingsInputs).forEach(([id, handler]) => {
       const el = document.getElementById(id);
@@ -6610,6 +6763,19 @@ hr {
         });
       }
     });
+
+    // Companion host (text input, separate handler)
+    const companionHostEl = document.getElementById('setting-companion-host');
+    if (companionHostEl) {
+      companionHostEl.addEventListener('change', () => {
+        state.settings.companionHost = companionHostEl.value.trim() || 'http://127.0.0.1:8000';
+        saveState();
+        if (state.settings.companionEnabled) {
+          stopCompanionPolling();
+          startCompanionPolling();
+        }
+      });
+    }
 
     document.getElementById('show-snapshots-btn').addEventListener('click', showSnapshots);
     document.getElementById('snapshots-close').addEventListener('click', () => {
