@@ -2175,17 +2175,38 @@ hr {
     height: calc(100dvh - var(--topbar-height, 100px));
   }
 
-  /* Reihenfolge: Aktiv oben (mit Prev/GO) → Vergangen → Folgend → Quick-Bar */
+  /* Reihenfolge: Vergangen → Aktiv (mit Prev/GO) → Folgend → Quick-Bar */
   .show-grid {
     display: flex;
     flex-direction: column;
     grid-template-columns: unset;
-    gap: var(--space-2);
+    gap: var(--space-1);
     padding: var(--space-2);
   }
-  .current-column { order: 1; flex-shrink: 0; }
-  .past-column    { order: 2; max-height: 12vh; flex-shrink: 0; }
-  .next-column    { order: 3; max-height: 15vh; flex-shrink: 0; }
+  .past-column    { order: 1; flex-shrink: 0; max-height: 80px; }
+  .current-column { order: 2; flex-shrink: 0; }
+  .next-column    { order: 3; flex-shrink: 0; max-height: 80px; }
+
+  /* Side-Cards (Vergangen / Folgend) sehr kompakt — eine Zeile pro Cue */
+  .cue-card-side {
+    padding: var(--space-1) var(--space-2) !important;
+    gap: var(--space-2) !important;
+    align-items: center !important;
+  }
+  .cue-card-side .cube-indicators,
+  .cue-card-side .note {
+    display: none !important;
+  }
+  .cue-card-side .position {
+    font-size: var(--text-xs) !important;
+    min-width: 20px !important;
+  }
+  .cue-card-side .name {
+    font-size: var(--text-sm) !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
 
   /* Spalten-Titel kompakt */
   .past-column .column-title,
@@ -2195,8 +2216,7 @@ hr {
     font-size: var(--text-sm);
   }
 
-  /* AKTIV-Card: minimalistische Darstellung */
-  /* "◆ Aktiv ◆" Column-Title weg — stattdessen grüner Rahmen zeigt aktiven Zustand */
+  /* AKTIV-Card: minimalistische Darstellung — grüner Rahmen zeigt aktiv */
   .current-column .column-title {
     display: none;
   }
@@ -2204,54 +2224,54 @@ hr {
     border: 2px solid var(--border-default);
     transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
   }
-  /* Aktiv-Zustand: grüner glow-Rahmen (wird via JS gesetzt ODER via Vorhandensein eines Cue-Card-Inhalts) */
   .current-column:has(.current-position:not([style*="info"])) {
     border-color: var(--accent-go);
     box-shadow: 0 0 14px rgba(34, 197, 94, 0.35);
   }
 
-  /* Reduzierte Karten-Inhalte — Cube-Grid, Details, Fade, Live-Edit-Button raus */
+  /* Current-Cue-Card kompakt — weniger Padding, alle Metadaten raus */
+  .current-cue-card {
+    padding: var(--space-2) !important;
+  }
   .current-cube-grid,
   .current-fade,
-  .live-edit-btn {
+  .live-edit-btn,
+  .current-detail {
     display: none !important;
   }
 
-  /* Cue-Nummer kleiner, Titel etwas kleiner */
   .current-position {
-    font-size: var(--text-xl);
-    margin-bottom: 0;
+    font-size: var(--text-lg);
+    margin: 0 0 2px 0;
   }
   .current-name {
-    font-size: var(--text-lg);
-    margin-bottom: var(--space-2);
+    font-size: var(--text-base);
+    margin: 0 0 var(--space-1) 0;
+    line-height: 1.2;
   }
-
-  /* Detail + Note in eine Zeile mit Trennstrich */
-  .current-detail,
   .current-note {
-    display: inline;
     font-size: var(--text-xs);
     color: var(--text-muted);
+    margin-bottom: var(--space-1);
   }
-  .current-detail + .current-note::before {
-    content: " · ";
-    margin: 0 4px;
-  }
-  /* Das "▶ Aktiv"-Badge (erstes div mit inline style) wird auf Mobile ausgeblendet,
-     der grüne Rahmen reicht. Der Selektor matcht das erste div-Kind direkt in der card. */
-  #current-cue-card > div:first-child[style*="accent-go"] {
+
+  /* "▶ Aktiv"-Badge ausblenden — grüner Rahmen reicht */
+  #current-cue-card > div:first-child[style*="accent-go"],
+  #current-cue-card > div:first-child[style*="text-muted"] {
     display: none;
   }
 
-  /* Prev/GO-Buttons groß und prominent, Live-Edit ist ja eh raus */
+  /* Prev/GO-Buttons direkt unter dem Titel, kein großer Abstand */
   .current-actions {
     display: flex;
     gap: var(--space-2);
-    margin-top: var(--space-2);
+    margin-top: var(--space-1);
   }
   .current-actions .btn-go {
     flex: 1;
+  }
+  .current-actions .btn-prev {
+    flex: 0 0 auto;
   }
 
   /* Quick-Bar: sticky am unteren Rand, Schatten oben abgesetzt */
@@ -2314,29 +2334,116 @@ hr {
     height: calc(100dvh - 44px);
   }
 
-  /* Landscape: wieder 3-spaltig, aber sehr kompakt, Quick-Bar RECHTS statt unten */
+  /* 3-spaltig, aber Aktiv bekommt mehr Platz, um GO-Button unterzubringen */
   .show-grid {
     display: grid;
-    grid-template-columns: 1fr 1.8fr 1fr;
+    grid-template-columns: 0.9fr 2fr 0.9fr;
     grid-template-rows: 1fr;
     gap: var(--space-2);
     padding: var(--space-2);
     flex: 1;
+    overflow: hidden;
   }
-  .past-column   { order: unset; max-height: none; }
-  .current-column { order: unset; }
-  .next-column   { order: unset; max-height: none; }
+  .past-column   { order: unset; max-height: none; min-height: 0; }
+  .current-column { order: unset; min-height: 0; }
+  .next-column   { order: unset; max-height: none; min-height: 0; }
 
-  /* Cube-Grid bleibt auch im Landscape raus (Platz knapp) */
+  /* Current-Card: alles auf das Wesentliche — max 3 Zeilen Text */
+  .current-cue-card {
+    padding: var(--space-2) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    height: 100% !important;
+    gap: 2px !important;
+  }
   .current-cube-grid,
   .current-fade,
-  .live-edit-btn {
+  .live-edit-btn,
+  .current-detail {
+    display: none !important;
+  }
+
+  /* "▶ Aktiv"-Badge raus im Landscape */
+  #current-cue-card > div:first-child[style*="accent-go"],
+  #current-cue-card > div:first-child[style*="text-muted"] {
     display: none !important;
   }
 
   .current-column .column-title { display: none; }
 
-  /* Quick-Bar unten, aber weniger Höhe */
+  /* Cue-Nr und Titel kompakt */
+  .current-position {
+    font-size: var(--text-base) !important;
+    margin: 0 !important;
+    line-height: 1 !important;
+  }
+  .current-name {
+    font-size: var(--text-md) !important;
+    margin: 0 !important;
+    line-height: 1.15 !important;
+    /* max 2 Zeilen */
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+  }
+  .current-note {
+    font-size: var(--text-xs) !important;
+    margin: 0 !important;
+    line-height: 1.1 !important;
+    /* max 1 Zeile */
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  /* Prev/GO-Buttons prominent — nehmen min ~44 Höhe, flex 1 damit GO breit */
+  .current-actions {
+    display: flex !important;
+    gap: var(--space-2) !important;
+    margin-top: var(--space-1) !important;
+    flex-shrink: 0 !important;
+  }
+  .current-actions .btn-go {
+    flex: 1 !important;
+    min-height: 44px !important;
+    font-size: var(--text-base) !important;
+  }
+  .current-actions .btn-prev {
+    flex: 0 0 auto !important;
+    min-height: 44px !important;
+    font-size: var(--text-sm) !important;
+  }
+
+  /* Side-Cards kompakt wie Portrait */
+  .cue-card-side {
+    padding: var(--space-1) var(--space-2) !important;
+    gap: var(--space-1) !important;
+  }
+  .cue-card-side .cube-indicators,
+  .cue-card-side .note {
+    display: none !important;
+  }
+  .cue-card-side .position {
+    font-size: var(--text-xs) !important;
+    min-width: 20px !important;
+  }
+  .cue-card-side .name {
+    font-size: var(--text-sm) !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  /* Past/Next Column-Titel: kleiner */
+  .past-column .column-title,
+  .next-column .column-title {
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--text-xs);
+  }
+
+  /* Quick-Bar unten kompakt */
   .quick-bar {
     padding: var(--space-1);
     gap: var(--space-1);
@@ -5339,7 +5446,7 @@ hr {
       if (!cue) continue;
 
       const mode = qb.mode || 'tap';
-      const modeLabel = mode === 'toggle' ? 'T' : mode === 'hold' ? 'H' : '';
+      const modeLabel = mode === 'toggle' ? 'T' : mode === 'hold' ? 'H' : mode === 'tap' ? 'S' : '';
       const isActive = runtime.quickButtonActive && runtime.quickButtonActive[i];
 
       const btn = document.createElement('button');
