@@ -2192,9 +2192,15 @@ hr {
     gap: var(--space-1);
     padding: var(--space-2);
   }
-  .past-column    { order: 1; flex-shrink: 0; max-height: 80px; }
-  .current-column { order: 2; flex-shrink: 0; }
-  .next-column    { order: 3; flex-shrink: 0; max-height: 80px; }
+  /* Past/Next: gleichgroß, garantiert 1 ganzer Cue sichtbar (Title + Card) */
+  .past-column    { order: 1; flex-shrink: 0; min-height: 84px; max-height: 84px; }
+  .current-column { order: 2; flex-shrink: 1; }
+  .next-column    { order: 3; flex-shrink: 0; min-height: 84px; max-height: 84px; }
+  .past-column .cue-list,
+  .next-column .cue-list {
+    overflow-y: auto;
+    flex: 1;
+  }
 
   /* Side-Cards (Vergangen / Folgend) sehr kompakt — eine Zeile pro Cue */
   .cue-card-side {
@@ -5314,6 +5320,12 @@ hr {
     for (let i = ptr + 1; i < state.playlist.length; i++) {
       next.appendChild(renderSideCueCard(state.playlist[i], i, false));
     }
+
+    // Auto-Scroll: jüngster vergangener Cue ans Ende, nächster folgender Cue an den Anfang
+    requestAnimationFrame(() => {
+      past.scrollTop = past.scrollHeight;
+      next.scrollTop = 0;
+    });
   }
 
   function renderSideCueCard(entry, idx, isPast) {
@@ -7386,6 +7398,15 @@ hr {
         triggerEmergency();
         break;
       case '0':
+        // Numpad-Logik: 0 = NOTFALL
+        e.preventDefault();
+        triggerEmergency();
+        break;
+      case ',':
+        // Numpad-Logik: , = alles AUS
+        e.preventDefault();
+        triggerBlackout();
+        break;
       case '1':
       case '2':
       case '3':
@@ -7396,8 +7417,7 @@ hr {
       case '8':
       case '9':
         e.preventDefault();
-        const slot = e.key === '0' ? 10 : parseInt(e.key, 10);
-        dispatchQuickButton(slot);
+        dispatchQuickButton(parseInt(e.key, 10));
         break;
       case '?':
         e.preventDefault();
