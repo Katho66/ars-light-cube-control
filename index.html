@@ -2244,10 +2244,20 @@ hr {
     box-shadow: 0 0 14px rgba(34, 197, 94, 0.35);
   }
 
+  /* Aktiv-Column: harte Höhe, damit der GO-Bereich kompakt bleibt */
+  .current-column {
+    max-height: 150px !important;
+  }
+
   /* Current-Cue-Card kompakt: Position + Name in EINER Zeile, rest weg */
   .current-cue-card {
-    padding: var(--space-2) !important;
+    padding: 6px !important;
     text-align: center;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    height: 100%;
   }
   .current-cube-grid,
   .current-fade,
@@ -2288,17 +2298,24 @@ hr {
     display: none;
   }
 
-  /* Prev/GO-Buttons direkt unter dem Titel, kein großer Abstand */
+  /* Prev/GO-Buttons direkt unter dem Titel, null Abstand */
   .current-actions {
-    display: flex;
-    gap: var(--space-2);
-    margin-top: var(--space-1);
+    display: flex !important;
+    gap: 6px !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
   .current-actions .btn-go {
-    flex: 1;
+    flex: 1 !important;
+    min-height: 48px !important;
+    padding: 6px 16px !important;
+    font-size: 17px !important;
   }
   .current-actions .btn-prev {
-    flex: 0 0 auto;
+    flex: 0 0 auto !important;
+    min-height: 48px !important;
+    padding: 6px 12px !important;
+    font-size: 13px !important;
   }
 
   /* Quick-Bar: sticky am unteren Rand, Schatten oben abgesetzt */
