@@ -2244,30 +2244,42 @@ hr {
     box-shadow: 0 0 14px rgba(34, 197, 94, 0.35);
   }
 
-  /* Current-Cue-Card kompakt — weniger Padding, alle Metadaten raus */
+  /* Current-Cue-Card kompakt: Position + Name in EINER Zeile, rest weg */
   .current-cue-card {
     padding: var(--space-2) !important;
+    text-align: center;
   }
   .current-cube-grid,
   .current-fade,
   .live-edit-btn,
-  .current-detail {
+  .current-detail,
+  .current-note {
     display: none !important;
   }
 
+  /* Position und Name in einer Zeile: beide als inline-Text mit Trenner */
   .current-position {
-    font-size: var(--text-lg);
-    margin: 0 0 2px 0;
+    display: inline !important;
+    font-size: var(--text-base) !important;
+    font-weight: 700 !important;
+    margin: 0 !important;
+  }
+  .current-position:not(:empty)::after {
+    content: "  ·  ";
+    opacity: 0.6;
+    font-weight: 400;
   }
   .current-name {
-    font-size: var(--text-base);
-    margin: 0 0 var(--space-1) 0;
-    line-height: 1.2;
+    display: inline !important;
+    font-size: var(--text-base) !important;
+    font-weight: 700 !important;
+    margin: 0 !important;
+    line-height: 1.3 !important;
   }
-  .current-note {
-    font-size: var(--text-xs);
-    color: var(--text-muted);
-    margin-bottom: var(--space-1);
+
+  /* "Bereit" / "▶ Aktiv" Labels (erste inline-styled divs) verstecken */
+  #current-cue-card > div:first-child[style] {
+    display: none !important;
   }
 
   /* "▶ Aktiv"-Badge ausblenden — grüner Rahmen reicht */
@@ -5286,8 +5298,8 @@ hr {
     if (ptr < 0) {
       current.innerHTML = `
         <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">Bereit</div>
-        <div class="current-position" style="color:var(--accent-info)">—</div>
-        <div class="current-name">${escapeHtml(state.show.name)}</div>
+        <span class="current-position" style="color:var(--accent-info)"></span>
+        <span class="current-name">${escapeHtml(state.show.name)}</span>
         <div class="current-detail">${state.playlist.length} Cues in der Playlist</div>
         <div class="current-note">GO drücken zum Starten</div>
         <div class="current-actions">
@@ -5360,8 +5372,8 @@ hr {
 
     return `
       <div style="font-size:11px;color:var(--accent-go);margin-bottom:4px;font-weight:600">▶ Aktiv</div>
-      <div class="current-position">${String(idx + 1).padStart(2, '0')}</div>
-      <div class="current-name">${escapeHtml(cue.name)}</div>
+      <span class="current-position">${String(idx + 1).padStart(2, '0')}</span>
+      <span class="current-name">${escapeHtml(cue.name)}</span>
       <div class="current-cube-grid">
         ${state.cubes.map(cube => {
           const actions = cue.actions.filter(a => a.cubeId === cube.id);
