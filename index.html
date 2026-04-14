@@ -216,6 +216,43 @@ hr {
   50% { background: var(--accent-emergency-hover); }
 }
 
+.blackout-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  font-size: var(--text-sm);
+  min-height: var(--touch-min);
+  transition: all var(--transition-fast);
+}
+
+.blackout-btn:hover, .blackout-btn:focus {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  outline: none;
+}
+
+.blackout-btn.active {
+  background: #1e293b;
+  color: #f1f5f9;
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.35);
+}
+
+.blackout-btn.active .blackout-icon {
+  animation: blackout-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes blackout-pulse {
+  0%, 100% { opacity: 0.5; }
+  50%      { opacity: 1; }
+}
+
 .reconnect-btn {
   display: flex;
   align-items: center;
@@ -1716,6 +1753,14 @@ hr {
     display: none;
   }
 
+  .blackout-btn {
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .blackout-label {
+    display: none;
+  }
+
   .show-grid {
     grid-template-columns: 1fr;
     padding: var(--space-2);
@@ -2085,6 +2130,10 @@ hr {
     <button id="emergency-btn" class="emergency-btn" type="button" aria-label="Notfall auslösen">
       <span class="emergency-icon">⚠</span>
       <span class="emergency-label">NOTFALL</span>
+    </button>
+    <button id="blackout-btn" class="blackout-btn" type="button" aria-label="Alles AUS — Blackout" title="Alles AUS (Blackout). Nochmal drücken oder GO um fortzufahren.">
+      <span class="blackout-icon">●</span>
+      <span class="blackout-label">alles AUS</span>
     </button>
     <button id="reconnect-btn" class="reconnect-btn" type="button" aria-label="Cubes prüfen" title="Alle Cubes prüfen">
       <span class="reconnect-icon">⟳</span>
@@ -3582,7 +3631,7 @@ hr {
         makeDefaultCue('lib-blackout', 'Blackout', 'Alle Cubes komplett aus', 0, 'off'),
         makeDefaultCue('lib-warmweiss-100', 'Warmweiß 100%', 'Alle Cubes warmweiß auf voller Helligkeit', 500, 'custom', [0, 0, 0, 255], 100),
         makeDefaultCue('lib-warmweiss-50', 'Warmweiß 50%', 'Alle Cubes warmweiß auf halber Helligkeit', 500, 'custom', [0, 0, 0, 255], 50),
-        makeDefaultCue('lib-notfall', 'NOTFALL Vollweiß', 'Notfall-Sicherheits-Cue: alle Cubes auf Vollweiß 100%', 0, 'custom', [255, 255, 255, 255], 100),
+        makeDefaultCue('lib-notfall', 'NOTFALL 50% WW', 'Notfall-Sicherheits-Cue: alle Cubes auf Warmweiß 50%', 0, 'custom', [0, 0, 0, 255], 50),
         makeDefaultCue('lib-pause', '⏸ Pause', 'Blackout für Pause zwischen den Teilen', 1000, 'off'),
         makeDefaultCue('lib-show-start', '🎭 Show Anfang — Viel Spaß!', 'Blackout — Show beginnt', 0, 'off'),
         makeDefaultCue('lib-show-ende', '🎉 Show Ende — Applaus!', 'Blackout — Show ist zu Ende', 1000, 'off'),
@@ -3651,6 +3700,8 @@ hr {
     liveEditDebounceTimers: {},
     pendingEmergencyConfirm: false,
     emergencyConfirmTimeout: null,
+    blackoutActive: false,
+    preBlackoutCue: null,
     pendingEscConfirm: false,
     escConfirmTimeout: null,
     quickButtonActive: {},
@@ -3699,7 +3750,7 @@ hr {
         { id: 'lib-show-ende', name: '■ Show Ende', desc: 'Blackout — Show ist zu Ende', fade: 1000, mode: 'off' },
         { id: 'lib-pause', name: '— Pause —', desc: 'Blackout für Pause zwischen den Teilen', fade: 1000, mode: 'off' },
         { id: 'lib-blackout', name: 'Blackout', desc: 'Alle Cubes komplett aus', fade: 0, mode: 'off' },
-        { id: 'lib-notfall', name: 'NOTFALL Vollweiß', desc: 'Notfall-Sicherheits-Cue', fade: 0, mode: 'custom', rgbw: [255,255,255,255], bri: 100 },
+        { id: 'lib-notfall', name: 'NOTFALL 50% WW', desc: 'Notfall-Sicherheits-Cue', fade: 0, mode: 'custom', rgbw: [0,0,0,255], bri: 50 },
       ];
       requiredCues.forEach(rc => {
         if (!state.library.find(c => c.id === rc.id)) {
@@ -5074,6 +5125,14 @@ hr {
 
     cancelAutoAdvance();
 
+    // Clear blackout state on any GO (next cue takes over)
+    if (runtime.blackoutActive) {
+      runtime.blackoutActive = false;
+      runtime.preBlackoutCue = null;
+      const bbtn = document.getElementById('blackout-btn');
+      if (bbtn) bbtn.classList.remove('active');
+    }
+
     if (state.playlist.length === 0) return;
 
     // Pointer ZUERST weiterbewegen, DANN feuern
@@ -5123,6 +5182,15 @@ hr {
 
   async function goPrev() {
     cancelAutoAdvance();
+
+    // Clear blackout state on PREV (cue takes over)
+    if (runtime.blackoutActive) {
+      runtime.blackoutActive = false;
+      runtime.preBlackoutCue = null;
+      const bbtn = document.getElementById('blackout-btn');
+      if (bbtn) bbtn.classList.remove('active');
+    }
+
     if (runtime.playlistPointer > 0) {
       runtime.playlistPointer--;
       const entry = state.playlist[runtime.playlistPointer];
@@ -6476,7 +6544,7 @@ hr {
     let emergencyCue = state.library.find(c => c.id === 'lib-notfall');
     if (!emergencyCue) emergencyCue = state.library.find(c => c.name.toLowerCase().includes('notfall'));
     if (!emergencyCue) {
-      // Hardcoded emergency: all cubes white max
+      // Hardcoded emergency: all cubes warm-white 50%
       emergencyCue = {
         id: 'emergency-fallback',
         name: 'NOTFALL',
@@ -6485,14 +6553,69 @@ hr {
           cubeId: c.id,
           stripId: 0,
           mode: 'custom',
-          rgbw: [255, 255, 255, 255],
-          brightness: 100,
+          rgbw: [0, 0, 0, 255],
+          brightness: 50,
         })),
       };
     }
 
     await fireCue(emergencyCue);
-    toast('NOTFALL ausgelöst — Vollweiß aktiv', 'warning');
+    toast('NOTFALL ausgelöst — Warmweiß 50% aktiv', 'warning');
+  }
+
+  // ==========================================================================
+  // Blackout (All-Black Toggle)
+  // ==========================================================================
+
+  async function triggerBlackout() {
+    const btn = document.getElementById('blackout-btn');
+
+    if (runtime.blackoutActive) {
+      // Resume: fire last active cue again (if we have one), else clear blackout
+      runtime.blackoutActive = false;
+      btn.classList.remove('active');
+
+      if (runtime.preBlackoutCue) {
+        await fireCue(runtime.preBlackoutCue);
+        toast('Cue wiederhergestellt', 'success');
+        runtime.preBlackoutCue = null;
+      } else {
+        toast('Blackout aus', 'info');
+      }
+      return;
+    }
+
+    // Enter blackout: remember current cue (if any), fire off-cue
+    const currentCue = getCurrentActiveCue();
+    if (currentCue) runtime.preBlackoutCue = currentCue;
+
+    const blackoutCue = {
+      id: 'blackout-live',
+      name: 'Blackout',
+      fadeTime: 0,
+      actions: state.cubes.map(c => ({
+        cubeId: c.id,
+        stripId: 0,
+        mode: 'off',
+      })),
+    };
+
+    runtime.blackoutActive = true;
+    btn.classList.add('active');
+    await fireCue(blackoutCue);
+    toast('Blackout — Cue wird beim nächsten GO oder Nochmal-AUS wiederhergestellt', 'info');
+  }
+
+  function getCurrentActiveCue() {
+    // Resolve the currently active cue via the runtime playlist pointer
+    if (typeof runtime.playlistPointer === 'number' && runtime.playlistPointer >= 0) {
+      const entry = state.playlist[runtime.playlistPointer];
+      if (entry) {
+        const libCue = state.library.find(c => c.id === entry.libraryId);
+        if (libCue) return libCue;
+      }
+    }
+    return null;
   }
 
   // ==========================================================================
@@ -6687,6 +6810,7 @@ hr {
 
     // Emergency
     document.getElementById('emergency-btn').addEventListener('click', triggerEmergency);
+    document.getElementById('blackout-btn').addEventListener('click', triggerBlackout);
 
     // Reconnect — check all cubes
     document.getElementById('reconnect-btn').addEventListener('click', async () => {
