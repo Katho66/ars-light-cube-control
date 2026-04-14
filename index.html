@@ -2184,18 +2184,32 @@ hr {
     height: calc(100dvh - var(--topbar-height, 100px));
   }
 
-  /* Reihenfolge: Vergangen → Aktiv (mit Prev/GO) → Folgend → Quick-Bar */
+  /* Vertikale Platzverteilung: Vergangen u. Folgend teilen sich den Restplatz,
+     Aktiv-Card ist hart auf 150px gedeckelt — kein Leerraum unter Folgend */
   .show-grid {
-    display: flex;
-    flex-direction: column;
-    grid-template-columns: unset;
-    gap: var(--space-1);
-    padding: var(--space-2);
+    display: flex !important;
+    flex-direction: column !important;
+    grid-template-columns: unset !important;
+    gap: 6px !important;
+    padding: 6px !important;
   }
-  /* Past/Next: gleichgroß, garantiert 1 ganzer Cue sichtbar (Title + Card) */
-  .past-column    { order: 1; flex-shrink: 0; min-height: 84px; max-height: 84px; }
-  .current-column { order: 2; flex-shrink: 1; }
-  .next-column    { order: 3; flex-shrink: 0; min-height: 84px; max-height: 84px; }
+  .past-column {
+    order: 1 !important;
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    max-height: none !important;
+  }
+  .current-column {
+    order: 2 !important;
+    flex: 0 0 150px !important;
+    max-height: 150px !important;
+  }
+  .next-column {
+    order: 3 !important;
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    max-height: none !important;
+  }
   .past-column .cue-list,
   .next-column .cue-list {
     overflow-y: auto;
