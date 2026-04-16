@@ -2560,7 +2560,7 @@ hr {
     </div>
 
     <div class="topbar-actions">
-      <span class="build-info" id="build-info">V4.1 · Build 2026-04-16 19:27</span>
+      <span class="build-info" id="build-info">V4.2 · Build 2026-04-16 22:14</span>
       <button id="shortcuts-help-btn" class="btn btn-icon" type="button" title="Tastatur-Shortcuts" style="font-size:18px;color:var(--text-secondary)">?</button>
       <button id="mode-toggle-btn" class="mode-toggle-btn" type="button">
         <span id="mode-toggle-label">Show ▶</span>
@@ -2981,14 +2981,12 @@ hr {
             <tr><th>Taste</th><th>Aktion</th></tr>
           </thead>
           <tbody>
-            <tr><td><kbd>Leertaste</kbd></td><td><strong>GO</strong> — Aktuellen Cue feuern, weiterrücken</td></tr>
-            <tr><td><kbd>←</kbd> Pfeil links</td><td><strong>Prev</strong> — Eine Position zurück</td></tr>
-            <tr><td><kbd>R</kbd></td><td><strong>Refresh</strong> — Aktuellen Cue nochmal feuern</td></tr>
-            <tr><td><kbd>E</kbd></td><td><strong>Live-Edit</strong> — Edit-Modal für aktuellen Cue öffnen</td></tr>
-            <tr><td><kbd>Esc</kbd> (2× schnell)</td><td><strong>Notfall</strong> — Vollweiß auf alle Cubes</td></tr>
-            <tr><td><kbd>1</kbd> – <kbd>9</kbd></td><td><strong>Quick-Button 1–9</strong></td></tr>
-            <tr><td><kbd>0</kbd></td><td><strong>Quick-Button 10</strong></td></tr>
-            <tr><td><kbd>?</kbd></td><td>Diese Hilfe anzeigen</td></tr>
+            <tr><td><kbd>Enter</kbd> (Num)</td><td><strong>GO</strong> — Aktuellen Cue feuern, weiterrücken</td></tr>
+            <tr><td><kbd>0</kbd> (Num)</td><td><strong>Prev</strong> — Eine Position zurück</td></tr>
+            <tr><td><kbd>/</kbd> (Num)</td><td><strong>Refire</strong> — Aktuellen Cue nochmal feuern</td></tr>
+            <tr><td><kbd>−</kbd> (Num)</td><td><strong>NOTFALL</strong> — Warmweiß 50 % auf alle Cubes</td></tr>
+            <tr><td><kbd>+</kbd> (Num)</td><td><strong>alles AUS</strong> — Blackout über alle Strips</td></tr>
+            <tr><td><kbd>1</kbd> – <kbd>9</kbd> (Num)</td><td><strong>Quick-Button 1–9</strong></td></tr>
           </tbody>
         </table>
         <hr>
@@ -7391,7 +7389,7 @@ hr {
     document.addEventListener('keyup', (e) => {
       if (runtime.mode !== 'show') return;
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
-      const keySlot = e.key === '0' ? 10 : (e.key >= '1' && e.key <= '9') ? parseInt(e.key, 10) : null;
+      const keySlot = (e.key >= '1' && e.key <= '9') ? parseInt(e.key, 10) : null;
       if (keySlot) {
         const qb = state.quickButtons.find(q => q.slot === keySlot);
         if (qb && qb.mode === 'hold' && runtime.quickButtonActive && runtime.quickButtonActive[keySlot]) {
@@ -7415,37 +7413,27 @@ hr {
 
     if (runtime.mode !== 'show') return;
 
+    // Numpad-Belegung (Operator arbeitet ausschließlich mit dem Zahlenblock).
+    // Für Zukunft gemerkt: frühere Belegung hatte Space=GO, ArrowLeft=Prev,
+    // R=refire, E=Live-Edit, Esc=NOTFALL, ','=Blackout, '?'=Help.
     switch (e.key) {
-      case ' ':
-      case 'Spacebar':
+      case 'Enter':
         e.preventDefault();
         goNext();
         break;
-      case 'ArrowLeft':
+      case '0':
         e.preventDefault();
         goPrev();
         break;
-      case 'r':
-      case 'R':
+      case '/':
         e.preventDefault();
         refireCurrent();
         break;
-      case 'e':
-      case 'E':
-        e.preventDefault();
-        openLiveEdit();
-        break;
-      case 'Escape':
+      case '-':
         e.preventDefault();
         triggerEmergency();
         break;
-      case '0':
-        // Numpad-Logik: 0 = NOTFALL
-        e.preventDefault();
-        triggerEmergency();
-        break;
-      case ',':
-        // Numpad-Logik: , = alles AUS
+      case '+':
         e.preventDefault();
         triggerBlackout();
         break;
@@ -7460,10 +7448,6 @@ hr {
       case '9':
         e.preventDefault();
         dispatchQuickButton(parseInt(e.key, 10));
-        break;
-      case '?':
-        e.preventDefault();
-        document.getElementById('shortcuts-modal').hidden = false;
         break;
     }
   }
